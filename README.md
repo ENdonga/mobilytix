@@ -34,16 +34,13 @@ No framework code changes required.
 ## Running Tests
 ```bash
 # Run all tests
-mvn clean test
-
-# Run with IntelliJ Maven Wrapper
 ./mvnw clean test
 
 # Run parallel suite
-mvn clean test -Dtestng.suite=testng-parallel.xml
+./mvnw clean test -Dtestng.suite=testng-parallel.xml
 
 # Generate Allure report
-mvn allure:serve
+./mvnw allure:serve
 ```
 
 ## Rebrand

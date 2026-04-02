@@ -1,25 +1,202 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <!--  TO REBRAND the project to your company or desired name change here:
+        1. Change groupId to com.yourcompany
+        2. Change artifactId to your project name
+        3. Run: Refactor → Rename package in IntelliJ to match groupId -->
+    <groupId>io.mobilytix</groupId>
+    <artifactId>mobilytix</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+    <name>Mobilytix - Android Automation Framework</name>
 
-  <groupId>io.mobilytix</groupId>
-  <artifactId>mobilytix</artifactId>
-  <version>1.0.0</version>
-  <packaging>jar</packaging>
+    <url>http://maven.apache.org</url>
 
-  <name>mobilytix</name>
-  <url>http://maven.apache.org</url>
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
+        <!-- Dependency versions — update here, applies everywhere -->
+        <appium.version>10.0.0</appium.version>
+        <selenium.version>4.41.0</selenium.version>
+        <testng.version>7.12.0</testng.version>
+        <jackson.version>2.21.2</jackson.version>
+        <log4j.version>2.25.4</log4j.version>
+        <extent.version>5.1.2</extent.version>
+        <allure.version>2.33.0</allure.version>
+        <aspectj.version>1.9.25</aspectj.version>
+        <lombok.version>1.18.44</lombok.version>
+        <surefire.version>3.5.5</surefire.version>
+        <allure.maven.version>2.17.0</allure.maven.version>
+        <compiler.plugin.version>3.13.0</compiler.plugin.version>
+    </properties>
 
-  <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.1</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
+    <dependencies>
+        <!-- The Appium Java client — provides AndroidDriver, UiAutomator2Options,
+            and all mobile-specific commands (tap, swipe, gestures).This is the core driver the framework is built on. -->
+        <dependency>
+            <groupId>io.appium</groupId>
+            <artifactId>java-client</artifactId>
+            <version>${appium.version}</version>
+        </dependency>
+        <!-- Source: https://mvnrepository.com/artifact/org.seleniumhq.selenium/selenium-java
+          Appium extends Selenium WebDriver. We pin this explicitly to avoid
+          version conflicts with whatever Selenium version Appium pulls in
+          transitively. Always keep this aligned with the Appium client version. -->
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+            <version>4.41.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <!-- Source: https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core
+          Used by ConfigLoader to parse config.yaml into typed Java objects.
+          jackson-databind handles the object mapping.
+          jackson-dataformat-yaml adds YAML support on top of databind. -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.21.2</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <!-- Log4j2 is the logging framework. Three artifacts are needed:
+              - log4j-api: the logging API your code calls
+              - log4j-core: the implementation that does the actual logging
+              - log4j-slf4j2-impl: bridges SLF4J (used by Appium/Selenium internally)
+                to Log4j2 so all logs go through one system -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j2-impl</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+        <!-- ExtentReports generates a rich HTML report with test steps, screenshots, and categorisation by app. The MobilytixListener writes to it after every test pass/fail/skip.-->
+        <dependency>
+            <groupId>com.aventstack</groupId>
+            <artifactId>extentreports</artifactId>
+            <version>${extent.version}</version>
+        </dependency>
+        <!-- Allure is a second reporting layer. It integrates with TestNG via the allure-testng artifact and generates detailed step-by-step
+            reports with attachments (screenshots, logcat dumps). The aspectjweaver is required for Allure's @Step annotation to work. -->
+        <dependency>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-testng</artifactId>
+            <version>${allure.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+            <version>${aspectj.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <!-- Source: https://mvnrepository.com/artifact/org.testng/testng
+              The test runner. Provides @Test, @BeforeClass, @AfterClass, listeners, parallel execution, and testng.xml suite management. -->
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>${testng.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- Lombok reduces boilerplate in data model classes.
+          @Data generates getters, setters, equals, hashCode, and toString. scope=provided means it is only needed at compile time — it is not bundled into the final jar. -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!--
+              Maven Surefire runs your TestNG suites.
+              - suiteXmlFile: defaults to testng.xml but can be overridden from the command line with -Dtestng.suite=testng-parallel.xml
+              - argLine: injects the AspectJ weaver as a Java agent at runtime, which is required for Allure's @Step annotations to be captured
+              - systemPropertyVariables: tells Allure where to write its raw JSON results so the report generator can find them later -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${surefire.version}</version>
+                <configuration>
+                    <suiteXmlFiles>
+                        <suiteXmlFile>${testng.suite}</suiteXmlFile>
+                    </suiteXmlFiles>
+                    <argLine>
+                        -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
+                    </argLine>
+                    <systemPropertyVariables>
+                        <allure.results.directory>
+                            ${project.build.directory}/allure-results
+                        </allure.results.directory>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+
+            <!--
+              Allure Maven plugin generates the HTML report from the raw JSON results written by allure-testng during the test run.
+              Run with: mvn allure:serve (opens browser automatically) mvn allure:report (generates to target/site/)
+            -->
+            <plugin>
+                <groupId>io.qameta.allure</groupId>
+                <artifactId>allure-maven</artifactId>
+                <version>${allure.maven.version}</version>
+                <configuration>
+                    <reportVersion>${allure.version}</reportVersion>
+                    <resultsDirectory>
+                        ${project.build.directory}/allure-results
+                    </resultsDirectory>
+                </configuration>
+            </plugin>
+
+            <!-- Maven Compiler plugin — enforces Java 17 for both source and target. Without this, Maven may silently use an older default.-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${compiler.plugin.version}</version>
+                <configuration>
+                    <source>17</source>
+                    <target>17</target>
+                    <annotationProcessorPaths>
+                        <!-- Tells the compiler to process Lombok annotations -->
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <!-- Default value for the testng.suite property. Override from command line: mvn clean test -Dtestng.suite=testng-parallel.xml -->
+    <profiles>
+        <profile>
+            <id>default-suite</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <testng.suite>testng.xml</testng.suite>
+            </properties>
+        </profile>
+    </profiles>
 </project>
