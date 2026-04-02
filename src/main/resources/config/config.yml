@@ -1,0 +1,72 @@
+framework:
+  name: Mobilytix
+
+  appium:
+    # Set auto_start to true when running in CI or if you want the framework to start and stop the Appium server automatically.
+    # Set to false if you prefer to start Appium manually before running tests.
+    # Both modes will never collide — the framework checks if the server is already running before attempting to start it.
+    auto_start: true
+    host: "127.0.0.1"
+    port: 4723
+    loge_level: "info"
+
+  # Path to the folder containing all APKs, relative to the project root.
+  # All app apk_path values below are relative to this base path.
+  apk_base_path: "apks"
+
+  # Default wait timeouts in seconds.
+  timeouts:
+    implicit: 0 # Keep at 0 — framework uses explicit waits only
+    explicit: 15 # How long to wait for an element before failing
+    page_load: 30 # How long to wait for a page/screen to load
+
+device:
+  # Run `adb devices` in your terminal to find your device udid.
+  # For an emulator it will look like: emulator-5554
+  # For a physical device it will be a serial number e.g. R58M123ABCD
+  udid: "emulator-5554"
+  platform_name: "Android"
+  platform_version: "14"
+  automation_name: "UiAutomator2"
+  new_command_timeout: 300
+  no_reset: false
+  full_reset: false
+
+# Add a new block here for every app you want to test.
+# The key (e.g. app_a) is what you pass to @AppUnderTest("app_a").
+apps:
+  app_a:
+    app_name: "APK Analyzer App"
+    # Path to the APK relative to apk_base_path above.
+    # Full resolved path will be: apks/app_a/app_a_v1.0.apk
+    apk_path: "app_a/Apk_Analyzer.apk"
+    package_name: "com.example.financeapp"
+    activity: "com.example.financeapp.MainActivity"
+    # Set requires_auth to true if the app requires login to access screens.
+    # Set to false if the app can be used without any authentication.
+    requires_auth: true
+    # auth_type options: otp | sso | basic | none
+    auth_type: "otp"
+    # otp_source options: sms | email | totp
+    # Only used when auth_type is otp.
+    otp_source: "sms"
+
+  app_b:
+    app_name: "Shopping App"
+    apk_path: "app_b/app_b_v2.1.apk"
+    package_name: "com.example.shopapp"
+    activity: "com.example.shopapp.SplashActivity"
+    requires_auth: false
+    auth_type: "none"
+    otp_source: ""
+
+reporting:
+  extent:
+    output_path: "target/extent-reports/mobilytix-report.html"
+    theme: "DARK"   # DARK | STANDARD
+  screenshots:
+    on_failure: true
+    on_pass: false
+  screen_recording:
+    enabled: false
+    output_path: "target/screen-recordings"
