@@ -307,7 +307,7 @@ Expected output: `2.x.x`
 Appium Doctor checks your full environment and flags anything missing or misconfigured. This is your final verification step.
 
 ```bash
-appium doctor --android
+appium-doctor --android
 ```
 
 Read through the output carefully.

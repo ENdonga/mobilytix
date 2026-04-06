@@ -25,7 +25,7 @@ public class ConfigLoader {
     private final Map<String, Object> rawConfig;
     private final ObjectMapper mapper;
 
-    // Config key constants — update here if config.yaml keys ever change
+    // Config key constants - update here if config.yaml keys ever change
     private static final String KEY_FRAMEWORK = "framework";
     private static final String KEY_APPIUM = "appium";
     private static final String KEY_AUTO_START = "auto_start";
@@ -57,13 +57,13 @@ public class ConfigLoader {
             rawConfig = mapper.readValue(is, Map.class);
             log.info("config.yaml loaded successfully");
         } catch (Exception e) {
-            throw new RuntimeException("Failed to load config.yaml — " + e.getMessage(), e);
+            throw new RuntimeException("Failed to load config.yaml - " + e.getMessage(), e);
         }
     }
 
     /**
      * Returns the single instance of ConfigLoader.
-     * Thread-safe via synchronized — safe for parallel test execution.
+     * Thread-safe via synchronized - safe for parallel test execution.
      */
     public static synchronized ConfigLoader getInstance() {
         if (instance == null) {
@@ -93,7 +93,7 @@ public class ConfigLoader {
             }
             String json = mapper.writeValueAsString(apps.get(appKey));
             AppConfig config = mapper.readValue(json, AppConfig.class);
-            log.debug("AppConfig loaded for key '{}' — app: {}", appKey, config.getAppName());
+            log.debug("AppConfig loaded for key '{}' - app: {}", appKey, config.getAppName());
             return config;
         } catch (RuntimeException e) {
             throw e;
@@ -188,11 +188,11 @@ public class ConfigLoader {
         Object current = rawConfig;
         for (String key : keys) {
             if (!(current instanceof Map)) {
-                throw new RuntimeException("Config path broken at key: '" + key + "' — parent is not a map");
+                throw new RuntimeException("Config path broken at key: '" + key + "' - parent is not a map");
             }
             current = ((Map<String, Object>) current).get(key);
             if (current == null) {
-                throw new RuntimeException("Config key not found: '" + key + "' — check config.yaml");
+                throw new RuntimeException("Config key not found: '" + key + "' - check config.yaml");
             }
         }
         return String.valueOf(current).trim();

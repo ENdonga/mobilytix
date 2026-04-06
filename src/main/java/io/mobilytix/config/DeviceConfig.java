@@ -20,9 +20,9 @@ public class DeviceConfig {
     @JsonProperty("automation_name")
     private String automationName;
     @JsonProperty("new_command_timeout")
-    private String newCommandTimeout;
+    private long newCommandTimeout;
     @JsonProperty("no_reset")
-    private String noReset;
+    private boolean noReset;
     @JsonProperty("full_reset")
-    private String fullReset;
+    private boolean fullReset;
 }
