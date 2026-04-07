@@ -40,13 +40,13 @@ apps:
     # Path to the APK relative to apk_base_path above.
     # Full resolved path will be: apks/app_a/app_a_v1.0.apk
     apk_path: "app_a/Apk_Analyzer.apk"
-    package_name: "com.example.financeapp"
-    activity: "com.example.financeapp.MainActivity"
+    package_name: "sk.styk.martin.apkanalyzer"
+    activity: "sk.styk.martin.apkanalyzer.ui.main"
     # Set requires_auth to true if the app requires login to access screens.
     # Set to false if the app can be used without any authentication.
-    requires_auth: true
+    requires_auth: false
     # auth_type options: otp | sso | basic | none
-    auth_type: "otp"
+    auth_type: "none"
     # otp_source options: sms | email | totp
     # Only used when auth_type is otp.
     otp_source: "sms"

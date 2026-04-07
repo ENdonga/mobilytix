@@ -315,6 +315,26 @@ Read through the output carefully.
 - Items marked with a green ✔ are correctly configured
 - Items marked with a red ✖ need to be fixed before continuing
 
+## Step 10 — Configure IntelliJ to inherit your shell environment
+
+IntelliJ does not load your shell profile by default, which means environment
+variables like `ANDROID_HOME` are not visible to the JVM when running tests
+or smoke tests from the IDE.
+
+Fix this once after installing IntelliJ:
+
+1. Go to **IntelliJ IDEA → Settings → Tools → Terminal**
+2. Set the shell path to `/bin/zsh -l`
+   (the `-l` flag loads your ~/.zshrc on startup)
+3. Click **Apply** then restart IntelliJ
+4. Open a new terminal tab inside IntelliJ and verify:
+```bash
+echo $ANDROID_HOME
+```
+
+You should see your SDK path. Any run configuration launched after this
+will also inherit `ANDROID_HOME` correctly.
+
 Common issues and fixes:
 
 | Issue | Fix |
