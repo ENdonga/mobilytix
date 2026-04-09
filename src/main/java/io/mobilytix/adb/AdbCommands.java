@@ -43,7 +43,7 @@ public class AdbCommands {
     private static final String FLAG_DUMP = "-d";
     private static final String FLAG_TAIL = "-t";
     private static final String FLAG_CLEAR = "-c";
-    private static final String FLAG_TAG = "-s";
+    private static final String FLAG_LOGCAT_SILENT = "-s";
     // ADB Shell sub-commands
     private static final String SHELL_PM = "pm";
     private static final String SHELL_AM = "am";
@@ -53,8 +53,8 @@ public class AdbCommands {
     private static final String PM_GRANT = "grant";
     private static final String PM_REVOKE = "revoke";
     private static final String PM_CLEAR = "clear";
-    private static final String PM_LIST_PACKAGES = "list packages";
-    private static final String PM_FORCE_STOP = "force-stop";
+    private static final String PM_LIST = "list";
+    private static final String PM_PACKAGES = "packages";
     private static final String PM_PACKAGE_PREFIX = "package:";
     // Activity Manager Sub commands
     private static final String AM_FORCE_STOP = "force-stop";
@@ -143,7 +143,7 @@ public class AdbCommands {
      * @return true if installed
      */
     public boolean isPackageInstalled(String packageName) {
-        String result = shell(SHELL_PM, "list", "packages", packageName);
+        String result = shell(SHELL_PM, PM_LIST, PM_PACKAGES, packageName);
         boolean installed = result.contains(PM_PACKAGE_PREFIX + packageName);
         log.debug("Package '{}' installed: {}", packageName, installed);
         return installed;
@@ -197,7 +197,7 @@ public class AdbCommands {
      */
     public String getLogcat(String tag, int lines) {
         log.debug("Getting {} lines of logcat for tag: {}", lines, tag);
-        List<String> cmd = new ArrayList<>(List.of(adbPath, FLAG_SERIAL, udid, CMD_LOGCAT, FLAG_DUMP, FLAG_TAIL, String.valueOf(lines), FLAG_TAG, tag));
+        List<String> cmd = new ArrayList<>(List.of(adbPath, FLAG_SERIAL, udid, CMD_LOGCAT, FLAG_DUMP, FLAG_TAIL, String.valueOf(lines), FLAG_LOGCAT_SILENT, tag));
         return exec(cmd);
     }
 
