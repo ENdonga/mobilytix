@@ -24,7 +24,8 @@ Open your terminal and run:
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-Follow the on-screen prompts. When it completes, run the two `export` commands it prints at the end (they look like `export PATH="/opt/homebrew/bin:$PATH"`). These add Homebrew to your shell path.
+Follow the on-screen prompts. When it completes, run the two `export` commands it prints at the end (they look like
+`export PATH="/opt/homebrew/bin:$PATH"`). These add Homebrew to your shell path.
 
 **Verify:**
 
@@ -171,7 +172,8 @@ appium -v
 appium-doctor --version
 ```
 
-You should see `2.x.x` for appium and `2.x.x` for appium-doctor. If you see `1.x.x`, you have an old global install — uninstall it first with `npm uninstall -g appium` and reinstall.
+You should see `2.x.x` for appium and `2.x.x` for appium-doctor. If you see `1.x.x`, you have an old global install — uninstall it first
+with `npm uninstall -g appium` and reinstall.
 
 **Install the UIAutomator2 driver** (required for Android automation):
 
@@ -195,7 +197,8 @@ Android Studio provides the Android SDK, ADB (Android Debug Bridge), the emulato
 
 **Download Android Studio:**
 
-Go to [https://developer.android.com/studio](https://developer.android.com/studio) and download the macOS `.dmg` for your chip (Apple Silicon or Intel).
+Go to [https://developer.android.com/studio](https://developer.android.com/studio) and download the macOS `.dmg` for your chip (Apple
+Silicon or Intel).
 
 Open the `.dmg`, drag Android Studio into your Applications folder, then launch it.
 
@@ -260,7 +263,25 @@ You need an emulator to run tests if you do not have a physical Android device.
 **Start the emulator from the terminal:**
 
 ```bash
-emulator -avd Pixel_7_API_34
+# Add this line in your path
+alias pixel7="emulator -avd [Pixel_7_API_34] &"
+# use this to start emulator from terminal
+emulator -avd Pixel_7_API_34 or
+# using the alias to start emulator
+pixel7
+```
+
+To see available emulators/AVDs run the following command
+
+```bash
+emulator -list-avds
+```
+
+Expected outputs
+
+```
+Pixel7
+Pixel_8
 ```
 
 > Replace `Pixel_7_API_34` with the exact name shown in your Device Manager. You can list all AVDs with `emulator -list-avds`.
@@ -328,6 +349,7 @@ Fix this once after installing IntelliJ:
    (the `-l` flag loads your ~/.zshrc on startup)
 3. Click **Apply** then restart IntelliJ
 4. Open a new terminal tab inside IntelliJ and verify:
+
 ```bash
 echo $ANDROID_HOME
 ```
@@ -337,11 +359,11 @@ will also inherit `ANDROID_HOME` correctly.
 
 Common issues and fixes:
 
-| Issue | Fix |
-|---|---|
-| `ANDROID_HOME` not set | Re-check Step 6 and reload your shell |
-| `adb` not found | Confirm `platform-tools` is in your `PATH` |
-| Java version wrong | Re-check Step 2 and confirm `JAVA_HOME` |
+| Issue                           | Fix                                         |
+|---------------------------------|---------------------------------------------|
+| `ANDROID_HOME` not set          | Re-check Step 6 and reload your shell       |
+| `adb` not found                 | Confirm `platform-tools` is in your `PATH`  |
+| Java version wrong              | Re-check Step 2 and confirm `JAVA_HOME`     |
 | `uiautomator2` driver not found | Re-run `appium driver install uiautomator2` |
 
 Do not proceed to Module 1 until `appium doctor --android` shows no critical errors.
@@ -350,17 +372,17 @@ Do not proceed to Module 1 until `appium doctor --android` shows no critical err
 
 ## Quick Reference — Version Summary
 
-| Tool | Minimum Version |
-|---|---|
-| macOS | 12 (Monterey) |
-| Java | 17 |
-| Maven | 3.9.x |
-| Node.js | 20.x (LTS) |
-| npm | 10.x |
-| Appium | 2.x |
-| UIAutomator2 driver | latest |
-| Android SDK API | 34 |
-| Allure CLI | 2.x |
+| Tool                | Minimum Version |
+|---------------------|-----------------|
+| macOS               | 12 (Monterey)   |
+| Java                | 17              |
+| Maven               | 3.9.x           |
+| Node.js             | 20.x (LTS)      |
+| npm                 | 10.x            |
+| Appium              | 2.x             |
+| UIAutomator2 driver | latest          |
+| Android SDK API     | 34              |
+| Allure CLI          | 2.x             |
 
 ---
 
@@ -370,10 +392,12 @@ Do not proceed to Module 1 until `appium doctor --android` shows no critical err
 Your shell config was not reloaded. Run `source ~/.zshrc` and try again. If that does not help, close and reopen your terminal.
 
 **Android Studio SDK path is different on your machine**  
-If you installed Android Studio to a custom location, find your SDK path in Android Studio under **Settings → Languages & Frameworks → Android SDK → Android SDK Location**, then update `ANDROID_HOME` in `~/.zshrc` accordingly.
+If you installed Android Studio to a custom location, find your SDK path in Android Studio under **Settings → Languages & Frameworks →
+Android SDK → Android SDK Location**, then update `ANDROID_HOME` in `~/.zshrc` accordingly.
 
 **Emulator is slow**  
-Enable hardware acceleration: in Android Studio go to **Settings → Tools → Emulator** and enable **Hardware HAXM** (Intel) or confirm **Hypervisor Framework** is active (Apple Silicon).
+Enable hardware acceleration: in Android Studio go to **Settings → Tools → Emulator** and enable **Hardware HAXM** (Intel) or confirm *
+*Hypervisor Framework** is active (Apple Silicon).
 
 **Appium server fails to start**  
 Check if the port is already in use:
