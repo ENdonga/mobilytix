@@ -305,7 +305,34 @@ Note the `emulator-5554` value — you will need this as the `udid` in the frame
 
 ---
 
-## Step 8 — Install Allure CLI
+## Step 8 — Install Appium Inspector
+
+Appium Inspector is a GUI tool for inspecting element locators on a running device or emulator. You will use it every time you write a new page object to find the correct `resource-id`, `content-desc`, and `class` values for your elements.
+
+**Download Appium Inspector:**
+
+Go to https://github.com/appium/appium-inspector/releases and download the latest `.dmg` for macOS.
+
+Open the `.dmg`, drag Appium Inspector into your Applications folder, then launch it.
+
+**Verify it opens correctly:**
+
+The app should open to a screen with a **Server** section and a **Desired Capabilities** section. You do not need to connect it to anything yet — that happens in Module 12 when you write your first page object.
+
+**How you will use it:**
+
+1. Start your emulator
+2. Start the Appium server manually with `appium` in your terminal
+3. Open Appium Inspector and connect with your app's capabilities
+4. Tap any element on the screen to see its locator attributes
+5. Use those attributes as `By` locators in your page objects
+
+> Appium Inspector requires a running Appium server and emulator to inspect elements.
+> It does not need to be running during test execution — it is a development tool only.
+ 
+---
+
+## Step 9 — Install Allure CLI
 
 Allure generates rich HTML reports from your test results.
 
@@ -323,7 +350,7 @@ Expected output: `2.x.x`
 
 ---
 
-## Step 9 — Run Appium Doctor
+## Step 10 — Run Appium Doctor
 
 Appium Doctor checks your full environment and flags anything missing or misconfigured. This is your final verification step.
 
@@ -336,7 +363,7 @@ Read through the output carefully.
 - Items marked with a green ✔ are correctly configured
 - Items marked with a red ✖ need to be fixed before continuing
 
-## Step 10 — Configure IntelliJ to inherit your shell environment
+## Step 11 — Configure IntelliJ to inherit your shell environment
 
 IntelliJ does not load your shell profile by default, which means environment
 variables like `ANDROID_HOME` are not visible to the JVM when running tests

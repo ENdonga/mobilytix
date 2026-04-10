@@ -41,7 +41,7 @@ apps:
     # Full resolved path will be: apks/app_a/app_a_v1.0.apk
     apk_path: "app_a/Apk_Analyzer.apk"
     package_name: "sk.styk.martin.apkanalyzer"
-    activity: "sk.styk.martin.apkanalyzer.ui.main"
+    activity: "sk.styk.martin.apkanalyzer.ui.main.MainActivity"
     # Set requires_auth to true if the app requires login to access screens.
     # Set to false if the app can be used without any authentication.
     requires_auth: false

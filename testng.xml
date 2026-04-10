@@ -16,6 +16,8 @@
                 <class name="io.mobilytix.tests.app_a.LoginTest"/>
                 <class name="io.mobilytix.tests.app_a.HomeTest"/>
             -->
+            <class name="io.mobilytix.tests.app_a.MainPageTest"/>
+            <class name="io.mobilytix.tests.app_a.ApkAnalyzerDetailPageTest"/>
         </classes>
     </test>
 

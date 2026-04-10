@@ -65,7 +65,7 @@ public abstract class BasePage {
      */
     protected void tap(By locator) {
         log.debug("Tap: {}", locator);
-        WaitUtils.waitForClickable(locator);
+        WaitUtils.waitForClickable(locator).click();
     }
 
     /**

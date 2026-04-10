@@ -147,7 +147,7 @@ public class DriverManager {
                 .setPlatformName(PLATFORM_ANDROID)
                 .setPlatformVersion(deviceConfig.getPlatformVersion())
                 .setApp(apkPath.toString())
-                .setAppPackage(appConfig.getAppName())
+                .setAppPackage(appConfig.getPackageName())
                 .setAppActivity(appConfig.getActivity())
                 .setAutomationName(deviceConfig.getAutomationName())
                 .setNewCommandTimeout(Duration.ofSeconds(deviceConfig.getNewCommandTimeout()))
