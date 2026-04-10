@@ -21,6 +21,9 @@ public class EnvUtils {
     private static final String PLATFORM_TOOLS_SUBPATH = "platform-tools";
     private static final String ADB_BINARY = "adb";
 
+    // Cached result — resolved once, reused on subsequent calls
+    private static String cachedAdbPath = null;
+
     private EnvUtils() {
     }
 
@@ -36,6 +39,11 @@ public class EnvUtils {
      * @return absolute path to adb binary, or "adb" as final fallback
      */
     public static String resolveAdbPath() {
+        // Return cached result if already resolved
+        if (cachedAdbPath != null) {
+            log.debug("ADB path (cached): {}", cachedAdbPath);
+            return cachedAdbPath;
+        }
         // Strategy 1 — environment variable (Mac/Linux terminal, CI)
         String fromEnv = System.getenv(ENV_ANDROID_HOME);
         if (isValidSdkHome(fromEnv)) {
@@ -51,7 +59,8 @@ public class EnvUtils {
         // Strategy 3 — rely on system PATH (CI where adb is on PATH directly)
         log.warn("ANDROID_HOME not found in environment or system properties. Falling back to 'adb' on system PATH. If this fails: \n" +
                 "  Mac/Linux — ensure ANDROID_HOME is set in ~/.zshrc  IntelliJ  — see SETUP.md section on IDE configuration");
-        return ADB_BINARY;
+        cachedAdbPath = ADB_BINARY;
+        return cachedAdbPath;
     }
 
     /**
@@ -69,6 +78,7 @@ public class EnvUtils {
     private static String buildAdbPath(String sdkHome, String source) {
         Path adbPath = Paths.get(sdkHome, PLATFORM_TOOLS_SUBPATH, ADB_BINARY);
         log.debug("ADB resolved via {} : {}", source, adbPath);
-        return adbPath.toString();
+        cachedAdbPath = adbPath.toString();
+        return cachedAdbPath;
     }
 }

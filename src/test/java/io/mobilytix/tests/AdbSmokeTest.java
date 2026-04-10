@@ -8,6 +8,15 @@ import java.util.List;
 
 public class AdbSmokeTest {
     public static void main(String[] args) throws InterruptedException {
+        System.out.println("=== Pre-flight Check ===");
+        List<String> devices = AdbCommands.listConnectedDevices();
+        System.out.println("Connected devices: " + devices);
+
+//        if (devices.isEmpty()) {
+//            System.err.println("No devices connected. Start your emulator first.");
+//            System.err.println("Run: emulator -avd Pixel_7");
+//            return;  // exit cleanly instead of crashing
+//        }
 
         AdbCommands adb = AdbCommands.getInstance();
         ApkManager apkManager = ApkManager.getInstance();
@@ -17,7 +26,6 @@ public class AdbSmokeTest {
         // AdbCommands checks
         // -----------------------------------------------------------------
         System.out.println("=== Connected Devices ===");
-        List<String> devices = AdbCommands.listConnectedDevices();
         System.out.println("Devices found: " + devices);
 
         System.out.println("\n=== Device Info ===");
