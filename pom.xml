@@ -111,7 +111,6 @@
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>${testng.version}</version>
-            <scope>test</scope>
         </dependency>
         <!-- Lombok reduces boilerplate in data model classes.
           @Data generates getters, setters, equals, hashCode, and toString. scope=provided means it is only needed at compile time — it is not bundled into the final jar. -->

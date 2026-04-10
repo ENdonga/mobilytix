@@ -59,7 +59,7 @@ public class SessionContext {
      *
      * @throws IllegalStateException if called before set()
      */
-    public String getAppKey() {
+    public static String getAppKey() {
         String key = currentAppKey.get();
         if (key == null) {
             throw new IllegalStateException("Session context has not been initialized for thread: " + Thread.currentThread().getName() + ". Ensure BaseTest.setUp() was called");

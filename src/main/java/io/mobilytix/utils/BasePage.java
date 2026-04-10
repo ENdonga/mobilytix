@@ -204,7 +204,7 @@ public abstract class BasePage {
      */
     public byte[] takeScreenshot() {
         log.debug("Taking screenshot");
-        return ((TakesScreenshot) driver()).getScreenshotAs(OutputType.BYTES);
+        return driver().getScreenshotAs(OutputType.BYTES);
     }
 
     /**
