@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<suite name="Mobilytix Parallel Suite"
+       parallel="classes"
+       thread-count="2"
+       verbose="1">
+
+    <!--
+        Parallel run — each class runs in its own thread.
+        thread-count controls how many classes run simultaneously.
+        Each thread gets its own AndroidDriver via ThreadLocal in DriverManager.
+
+        Requirements:
+          - One emulator/device per thread-count value
+          - Each device must have a unique udid
+          - Update config.yaml with the correct udid before running
+
+        Run with: ./mvnw clean test -Dtestng.suite=testng-parallel.xml
+    -->
+
+    <test name="Parallel Tests">
+        <classes>
+            <!--
+                Add test classes here as you create them.
+                Example:
+                <class name="io.mobilytix.tests.app_a.LoginTest"/>
+                <class name="io.mobilytix.tests.app_b.OnboardingTest"/>
+            -->
+        </classes>
+    </test>
+
+</suite>
