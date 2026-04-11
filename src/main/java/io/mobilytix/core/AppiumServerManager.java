@@ -65,7 +65,8 @@ public class AppiumServerManager {
             log.info("Appium server is already running on port - skipping start {}", config.getAppiumPort());
             return;
         }
-        log.info("Starting Appium Server on {}:{}", config.getAppiumHost(), config.getAppiumPort());
+        log.info("Starting Appium server on {}:{} — override source: {}", config.getAppiumHost(), config.getAppiumPort(),
+                config.getAppiumPort() != 4723 ? "override" : "config.yaml default");
         service = buildService();
         service.start();
         waitForAppiumServerReady();

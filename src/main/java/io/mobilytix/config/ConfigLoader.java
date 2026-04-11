@@ -9,18 +9,20 @@ import org.apache.logging.log4j.Logger;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Singleton configuration loader.
  * <p>
  * Reads config.yaml once on first access and caches the result.
  * All framework classes call ConfigLoader.getInstance() to get config values.
- * Never instantiate this class directly.
  * <p>
- * To add a new config value:
- * 1. Add the key to config.yaml
- * 2. Add a getter method here that calls getNestedValue() with the key path
+ * Override priority (highest to lowest):
+ * 1. System property  -Dprop.key=value   (command line)
+ * 2. System property  ENV_KEY=value       (.env file loaded by EnvLoader)
+ * 3. OS env var       ENV_KEY=value       (shell or CI environment)
+ * 4. config.yaml                          (default fallback)
+ * <p>
+ * See docs/ENV_OVERRIDE_GUIDE.md for the full list of override keys.
  */
 public class ConfigLoader {
     private static final Logger log = LogManager.getLogger(ConfigLoader.class);
@@ -51,19 +53,48 @@ public class ConfigLoader {
     private static final String KEY_SCREEN_RECORDING = "screen_recording";
     private static final String KEY_ENABLED = "enabled";
     private static final String KEY_PARALLEL_DEVICES = "parallel_devices";
-    private static final String PROP_DEVICE_UDID = "device.udid";   // -Ddevice.udid=xxx
-    private static final String ENV_DEVICE_UDID = "DEVICE_UDID";   // .env or OS env var
+
+    //-------------------------------------------------------------------------
+    // Override key constants
+    // Prop keys  = dot-notation used with -D flag
+    // Env keys   = UPPER_SNAKE used in .env file and OS environment
+    // -------------------------------------------------------------------------
+
+    // Device
+    private static final String PROP_DEVICE_UDID = "device.udid";
+    private static final String ENV_DEVICE_UDID = "DEVICE_UDID";
+    private static final String PROP_DEVICE_PLATFORM_VERSION = "device.platform_version";
+    private static final String ENV_DEVICE_PLATFORM_VERSION = "DEVICE_PLATFORM_VERSION";
+    // Appium
+    private static final String PROP_APPIUM_HOST = "appium.host";
+    private static final String ENV_APPIUM_HOST = "APPIUM_HOST";
+    private static final String PROP_APPIUM_PORT = "appium.port";
+    private static final String ENV_APPIUM_PORT = "APPIUM_PORT";
+    private static final String PROP_APPIUM_AUTO_START = "appium.auto_start";
+    private static final String ENV_APPIUM_AUTO_START = "APPIUM_AUTO_START";
+    // Reporting
+    private static final String PROP_EXTENT_OUTPUT_PATH = "extent.output_path";
+    private static final String ENV_EXTENT_OUTPUT_PATH = "EXTENT_OUTPUT_PATH";
+    private static final String PROP_SCREEN_RECORDING_ENABLED = "screen.recording.enabled";
+    private static final String ENV_SCREEN_RECORDING_ENABLED = "SCREEN_RECORDING_ENABLED";
+    // Authentication — credentials only come from env, never config.yaml
+    public static final String ENV_OTP_API_TOKEN = "OTP_API_TOKEN";
+    public static final String ENV_SSO_USERNAME = "SSO_USERNAME";
+    public static final String ENV_SSO_PASSWORD = "SSO_PASSWORD";
+
 
     private ConfigLoader() {
         mapper = new ObjectMapper(new YAMLFactory());
         try (InputStream is = getClass().getClassLoader().getResourceAsStream("config/config.yml")) {
             if (is == null) {
-                throw new RuntimeException("config.yaml not found. Ensure it exists at src/main/resources/config/config.yaml");
+                throw new ConfigException("config.yaml not found. Ensure it exists at src/main/resources/config/config.yaml");
             }
             rawConfig = mapper.readValue(is, Map.class);
             log.info("config.yaml loaded successfully");
+        } catch (ConfigException e) {
+            throw e;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to load config.yaml - " + e.getMessage(), e);
+            throw new ConfigException("Failed to load config.yaml — " + e.getMessage());
         }
     }
 
@@ -95,32 +126,46 @@ public class ConfigLoader {
         try {
             Map<String, Object> apps = (Map<String, Object>) rawConfig.get(KEY_APPS);
             if (apps == null || !apps.containsKey(appKey)) {
-                throw new ConfigException(appKey, "not found under apps: in config.yaml. " + "Available keys: " + apps.keySet());
+                throw new ConfigException(appKey, "not found under apps: in config.yaml. " + "Available keys: " + (apps != null ? apps.keySet() : "none"));
             }
             String json = mapper.writeValueAsString(apps.get(appKey));
             AppConfig config = mapper.readValue(json, AppConfig.class);
-            log.debug("AppConfig loaded for key '{}' - app: {}", appKey, config.getAppName());
+            log.debug("AppConfig loaded for key '{}' — app: {}", appKey, config.getAppName());
             return config;
-        } catch (RuntimeException e) {
+        } catch (ConfigException e) {
             throw e;
         } catch (Exception e) {
-            throw new ConfigException("Failed to load load config.yaml for key: " + appKey, e.getMessage());
+            throw new ConfigException("Failed to load config for key: " + appKey);
         }
     }
+
     // Device config
 
     /**
-     * Returns the DeviceConfig from the `device:` block in config.yaml.
+     * Returns the DeviceConfig from the device: block in config.yaml.
+     * Applies overrides from system properties and environment variables.
      */
     @SuppressWarnings("unchecked")
     public DeviceConfig getDeviceConfig() {
         try {
             String json = mapper.writeValueAsString(rawConfig.get(KEY_DEVICE));
             DeviceConfig config = mapper.readValue(json, DeviceConfig.class);
-            String udidOverride = resolveUdidOverride();
-            if (udidOverride != null && !udidOverride.isEmpty()) {
-                log.info("Device UDID overridden: {} → {} (source: {})", config.getUdid(), udidOverride, getUdidOverrideSource());
-                config.setUdid(udidOverride.trim());
+            // UDID override
+            String udidOverride = resolveOverride(PROP_DEVICE_UDID, ENV_DEVICE_UDID);
+            if (udidOverride != null) {
+                if (log.isInfoEnabled()) {
+                    log.info("Device UDID overridden: {} → {} (source: {})", config.getUdid(), udidOverride, getOverrideSource(PROP_DEVICE_UDID, ENV_DEVICE_UDID));
+                }
+                config.setUdid(udidOverride);
+            }
+            // Platform version override
+            String platformOverride = resolveOverride(PROP_DEVICE_PLATFORM_VERSION, ENV_DEVICE_PLATFORM_VERSION);
+            if (platformOverride != null) {
+                if (log.isInfoEnabled()) {
+                    log.info("Device platform version overridden: {} → {} (source: {})", config.getPlatformVersion(), platformOverride,
+                            getOverrideSource(PROP_DEVICE_PLATFORM_VERSION, ENV_DEVICE_PLATFORM_VERSION));
+                }
+                config.setPlatformVersion(platformOverride);
             }
             return config;
         } catch (Exception e) {
@@ -130,14 +175,35 @@ public class ConfigLoader {
 
     // Appium config
     public String getAppiumHost() {
+        String override = resolveOverride(PROP_APPIUM_HOST, ENV_APPIUM_HOST);
+        if (override != null) {
+            if (log.isDebugEnabled()) {
+                log.debug("Appium host overridden to: {} (source: {})", override, getOverrideSource(PROP_APPIUM_HOST, ENV_APPIUM_HOST));
+            }
+            return override;
+        }
         return getNestedValue(KEY_FRAMEWORK, KEY_APPIUM, KEY_HOST);
     }
 
     public int getAppiumPort() {
+        String override = resolveOverride(PROP_APPIUM_PORT, ENV_APPIUM_PORT);
+        if (override != null) {
+            if (log.isDebugEnabled()) {
+                log.debug("Appium port overridden to: {} (source: {})", override, getOverrideSource(PROP_APPIUM_PORT, ENV_APPIUM_PORT));
+            }
+            return Integer.parseInt(override);
+        }
         return Integer.parseInt(getNestedValue(KEY_FRAMEWORK, KEY_APPIUM, KEY_PORT));
     }
 
     public boolean isAppiumAutoStart() {
+        String override = resolveOverride(PROP_APPIUM_AUTO_START, ENV_APPIUM_AUTO_START);
+        if (override != null) {
+            if (log.isDebugEnabled()) {
+                log.debug("Appium auto_start overridden to: {} (source: {})", override, getOverrideSource(PROP_APPIUM_AUTO_START, ENV_APPIUM_AUTO_START));
+            }
+            return Boolean.parseBoolean(override);
+        }
         return Boolean.parseBoolean(getNestedValue(KEY_FRAMEWORK, KEY_APPIUM, KEY_AUTO_START));
     }
 
@@ -160,6 +226,11 @@ public class ConfigLoader {
 
     // Reporting config
     public String getExtentOutputPath() {
+        String override = resolveOverride(PROP_EXTENT_OUTPUT_PATH, ENV_EXTENT_OUTPUT_PATH);
+        if (override != null) {
+            log.debug("Extent output path overridden to: {}", override);
+            return override;
+        }
         return getNestedValue(KEY_REPORTING, KEY_EXTENT, KEY_OUTPUT_PATH);
     }
 
@@ -176,21 +247,62 @@ public class ConfigLoader {
     }
 
     public boolean isScreenRecordingEnabled() {
-        return Boolean.parseBoolean(
-                getNestedValue(KEY_REPORTING, KEY_SCREEN_RECORDING, KEY_ENABLED));
+        String override = resolveOverride(PROP_SCREEN_RECORDING_ENABLED, ENV_SCREEN_RECORDING_ENABLED);
+        if (override != null) {
+            log.debug("Screen recording enabled overridden to: {}", override);
+            return Boolean.parseBoolean(override);
+        }
+        return Boolean.parseBoolean(getNestedValue(KEY_REPORTING, KEY_SCREEN_RECORDING, KEY_ENABLED));
     }
 
     public String getScreenRecordingOutputPath() {
         return getNestedValue(KEY_REPORTING, KEY_SCREEN_RECORDING, KEY_OUTPUT_PATH);
     }
 
+    /**
+     * Returns the OTP API token for email-based OTP resolution.
+     * Set via OTP_API_TOKEN in .env or CI environment.
+     *
+     * @return token string or null if not configured
+     */
+    public String getOtpApiToken() {
+        String token = System.getProperty(ENV_OTP_API_TOKEN, System.getenv(ENV_OTP_API_TOKEN));
+        if (token == null || token.isBlank()) {
+            log.warn("OTP_API_TOKEN not set — email OTP resolution will fail. " + "Set it in .env or as a CI environment variable.");
+        }
+        return token;
+    }
+
+    /**
+     * Returns the SSO username.
+     * Set via SSO_USERNAME in .env or CI environment.
+     *
+     * @return username string or null if not configured
+     */
+    public String getSsoUsername() {
+        return System.getProperty(ENV_SSO_USERNAME, System.getenv(ENV_SSO_USERNAME));
+    }
+
+    /**
+     * Returns the SSO password.
+     * Set via SSO_PASSWORD in .env or CI environment.
+     *
+     * @return password string or null if not configured
+     */
+    public String getSsoPassword() {
+        return System.getProperty(ENV_SSO_PASSWORD, System.getenv(ENV_SSO_PASSWORD));
+    }
+
+    @SuppressWarnings("unchecked")
     public List<String> getParallelDeviceUdids() {
         try {
             List<Map<String, Object>> devices = (List<Map<String, Object>>) rawConfig.get(KEY_PARALLEL_DEVICES);
             if (devices == null || devices.isEmpty()) {
                 return List.of();
             }
-            return devices.stream().map(device -> String.valueOf(device.get("udid"))).collect(Collectors.toList());
+            return devices.stream()
+                    .map(device -> String.valueOf(device.get("udid")))
+                    .toList();
         } catch (Exception e) {
             return List.of();
         }
@@ -203,7 +315,7 @@ public class ConfigLoader {
      * reads rawConfig["framework"]["appium"]["port"]
      *
      * @param keys the sequence of keys to traverse
-     * @return the value as a String
+     * @return the value as a trimmed String
      */
     @SuppressWarnings("unchecked")
     public String getNestedValue(String... keys) {
@@ -221,41 +333,43 @@ public class ConfigLoader {
     }
 
     /**
-     * Resolves device UDID override from three sources in priority order:
-     * 1. -Ddevice.udid system property  (command line — highest priority)
-     * 2. DEVICE_UDID system property    (.env file loaded by EnvLoader)
-     * 3. DEVICE_UDID environment var    (OS environment variable)
-     * 4. null                           (use config.yaml value)
+     * Resolves an override value from three sources in priority order:
+     * 1. System property  -Dprop.key=value  (command line)
+     * 2. System property  ENV_KEY=value      (.env file via EnvLoader)
+     * 3. OS env var       ENV_KEY=value      (shell or CI)
+     *
+     * @param propKey dot-notation system property key e.g. "device.udid"
+     * @param envKey  uppercase env var key            e.g. "DEVICE_UDID"
+     * @return the override value or null if not set in any source
      */
-    private String resolveUdidOverride() {
-        // 1. Command line: ./mvnw clean test -Ddevice.udid=emulator-5558
-        String fromCommandLine = System.getProperty(PROP_DEVICE_UDID);
-        if (fromCommandLine != null && !fromCommandLine.isBlank()) {
-            return fromCommandLine.trim();
-        }
+    private String resolveOverride(String propKey, String envKey) {
+        // 1. Command line: -Dprop.key=value
+        String fromProp = System.getProperty(propKey);
+        if (fromProp != null && !fromProp.isBlank()) return fromProp.trim();
 
-        // 2. .env file — EnvLoader.load() calls System.setProperty("DEVICE_UDID", value)
-        String fromEnvFile = System.getProperty(ENV_DEVICE_UDID);
-        if (fromEnvFile != null && !fromEnvFile.isBlank()) {
-            return fromEnvFile.trim();
-        }
+        // 2. .env file — EnvLoader stores as System.setProperty(ENV_KEY, value)
+        String fromEnvProp = System.getProperty(envKey);
+        if (fromEnvProp != null && !fromEnvProp.isBlank()) return fromEnvProp.trim();
 
-        // 3. OS environment variable — set in shell or CI pipeline
-        String fromOsEnv = System.getenv(ENV_DEVICE_UDID);
-        if (fromOsEnv != null && !fromOsEnv.isBlank()) {
-            return fromOsEnv.trim();
-        }
+        // 3. OS environment variable
+        String fromEnv = System.getenv(envKey);
+        if (fromEnv != null && !fromEnv.isBlank()) return fromEnv.trim();
+
         return null;
     }
 
-    private String getUdidOverrideSource() {
-        if (System.getProperty(PROP_DEVICE_UDID) != null) {
-            return "command line (-Ddevice.udid)";
+    /**
+     * Returns a human-readable label for which source provided the override.
+     * Used in log messages only.
+     */
+    private String getOverrideSource(String propKey, String envKey) {
+        if (System.getProperty(propKey) != null) {
+            return "command line (-D" + propKey + ")";
         }
-        if (System.getProperty(ENV_DEVICE_UDID) != null) {
+        if (System.getProperty(envKey) != null) {
             return ".env file";
         }
-        if (System.getenv(ENV_DEVICE_UDID) != null) {
+        if (System.getenv(envKey) != null) {
             return "OS environment variable";
         }
         return "config.yaml";
