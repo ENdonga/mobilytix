@@ -51,6 +51,8 @@ public class ConfigLoader {
     private static final String KEY_SCREEN_RECORDING = "screen_recording";
     private static final String KEY_ENABLED = "enabled";
     private static final String KEY_PARALLEL_DEVICES = "parallel_devices";
+    private static final String PROP_DEVICE_UDID = "device.udid";   // -Ddevice.udid=xxx
+    private static final String ENV_DEVICE_UDID = "DEVICE_UDID";   // .env or OS env var
 
     private ConfigLoader() {
         mapper = new ObjectMapper(new YAMLFactory());
@@ -114,7 +116,13 @@ public class ConfigLoader {
     public DeviceConfig getDeviceConfig() {
         try {
             String json = mapper.writeValueAsString(rawConfig.get(KEY_DEVICE));
-            return mapper.readValue(json, DeviceConfig.class);
+            DeviceConfig config = mapper.readValue(json, DeviceConfig.class);
+            String udidOverride = resolveUdidOverride();
+            if (udidOverride != null && !udidOverride.isEmpty()) {
+                log.info("Device UDID overridden: {} → {} (source: {})", config.getUdid(), udidOverride, getUdidOverrideSource());
+                config.setUdid(udidOverride.trim());
+            }
+            return config;
         } catch (Exception e) {
             throw new ConfigException("Failed to load DeviceConfig");
         }
@@ -210,5 +218,46 @@ public class ConfigLoader {
             }
         }
         return String.valueOf(current).trim();
+    }
+
+    /**
+     * Resolves device UDID override from three sources in priority order:
+     * 1. -Ddevice.udid system property  (command line — highest priority)
+     * 2. DEVICE_UDID system property    (.env file loaded by EnvLoader)
+     * 3. DEVICE_UDID environment var    (OS environment variable)
+     * 4. null                           (use config.yaml value)
+     */
+    private String resolveUdidOverride() {
+        // 1. Command line: ./mvnw clean test -Ddevice.udid=emulator-5558
+        String fromCommandLine = System.getProperty(PROP_DEVICE_UDID);
+        if (fromCommandLine != null && !fromCommandLine.isBlank()) {
+            return fromCommandLine.trim();
+        }
+
+        // 2. .env file — EnvLoader.load() calls System.setProperty("DEVICE_UDID", value)
+        String fromEnvFile = System.getProperty(ENV_DEVICE_UDID);
+        if (fromEnvFile != null && !fromEnvFile.isBlank()) {
+            return fromEnvFile.trim();
+        }
+
+        // 3. OS environment variable — set in shell or CI pipeline
+        String fromOsEnv = System.getenv(ENV_DEVICE_UDID);
+        if (fromOsEnv != null && !fromOsEnv.isBlank()) {
+            return fromOsEnv.trim();
+        }
+        return null;
+    }
+
+    private String getUdidOverrideSource() {
+        if (System.getProperty(PROP_DEVICE_UDID) != null) {
+            return "command line (-Ddevice.udid)";
+        }
+        if (System.getProperty(ENV_DEVICE_UDID) != null) {
+            return ".env file";
+        }
+        if (System.getenv(ENV_DEVICE_UDID) != null) {
+            return "OS environment variable";
+        }
+        return "config.yaml";
     }
 }

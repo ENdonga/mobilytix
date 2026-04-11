@@ -19,7 +19,7 @@ See [SETUP.md](SETUP.md) for full environment setup instructions.
 
 ## Project Structure
 
-See [PROJECT_SCAFFOLD.md](docs/PROJECT_SCAFFOLD.md) for the folder layout.
+See [docs/PROJECT_SCAFFOLD.md](docs/PROJECT_SCAFFOLD.md) for the folder layout.
 
 ## Adding a New App
 
@@ -32,6 +32,7 @@ See [PROJECT_SCAFFOLD.md](docs/PROJECT_SCAFFOLD.md) for the folder layout.
 No framework code changes required.
 
 ## Running Tests
+
 ```bash
 # Run all tests
 ./mvnw clean test
@@ -43,6 +44,11 @@ No framework code changes required.
 ./mvnw allure:serve
 ```
 
+## Configuration Overrides
+
+See [docs/ENV_OVERRIDE_GUIDE.md](docs/ENV_OVERRIDE_GUIDE.md) for overriding
+`config.yaml` values via command line, `.env` file, or environment variables.
+
 ## Rebrand
 
-See the rebrand guide in [PROJECT_SCAFFOLD.md](docs/PROJECT_SCAFFOLD.md) section 1.2.
+See the rebrand guide in [docs/PROJECT_SCAFFOLD.md](docs/PROJECT_SCAFFOLD.md) section 1.2.

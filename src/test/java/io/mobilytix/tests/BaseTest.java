@@ -9,6 +9,7 @@ import io.mobilytix.core.DriverManager;
 import io.mobilytix.core.SessionContext;
 import io.mobilytix.exceptions.AppiumServerException;
 import io.mobilytix.reporting.MobilytixListener;
+import io.mobilytix.utils.EnvLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.testng.SkipException;
@@ -51,6 +52,8 @@ public abstract class BaseTest {
      */
     @BeforeSuite(alwaysRun = true)
     public void globalSetup() {
+        EnvLoader.load();
+
         log.info("========================================");
         log.info("  Mobilytix Suite Starting");
         log.info("========================================");
@@ -63,7 +66,6 @@ public abstract class BaseTest {
             log.error("Suite aborted during pre-flight: {}", e.getMessage());
             throw e;
         }
-
     }
 
     /**
