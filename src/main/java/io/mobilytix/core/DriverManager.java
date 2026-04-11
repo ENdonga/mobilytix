@@ -5,6 +5,8 @@ import io.appium.java_client.android.options.UiAutomator2Options;
 import io.mobilytix.config.AppConfig;
 import io.mobilytix.config.ConfigLoader;
 import io.mobilytix.config.DeviceConfig;
+import io.mobilytix.exceptions.ApkNotFoundException;
+import io.mobilytix.exceptions.DriverInitException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.SessionNotCreatedException;
@@ -72,9 +74,9 @@ public class DriverManager {
             driver.manage().timeouts().implicitlyWait(IMPLICIT_WAIT);
             driverThread.set(driver);
             log.info("Driver initialized successfully. Session ID: {}", driver.getSessionId());
-        } catch (SessionNotCreatedException ex) {
+        } catch (Exception ex) {
             log.error("Driver initialization failed for app: '{}':{}", appKey, ex.getMessage());
-            throw ex;
+            throw new DriverInitException(appKey, ex);
         }
     }
 
@@ -133,7 +135,7 @@ public class DriverManager {
         Path resolvedPath = Paths.get(config.getApkBasePath(), apkPath).toAbsolutePath();
         log.info("Resolved path: {}", resolvedPath);
         if (!resolvedPath.toFile().exists()) {
-            throw new RuntimeException("Apk file not found at: " + resolvedPath + ". Check APK path in config.yml and ensure APK is placed in the apks/ folder");
+            throw new ApkNotFoundException(resolvedPath.toString());
         }
         return resolvedPath;
     }

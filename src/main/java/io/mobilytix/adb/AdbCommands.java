@@ -1,6 +1,8 @@
 package io.mobilytix.adb;
 
 import io.mobilytix.config.ConfigLoader;
+import io.mobilytix.exceptions.AdbCommandException;
+import io.mobilytix.exceptions.DeviceNotReadyException;
 import io.mobilytix.utils.EnvUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -112,11 +114,7 @@ public class AdbCommands {
      */
     public void assertDeviceReady() {
         if (!isDeviceReady()) {
-            throw new RuntimeException("Device '" + udid + "' is not connected or not ready. Fix options:\n" +
-                    "  1. Start your emulator in Android Studio → Device Manager\n" +
-                    "  2. Connect your physical device via USB\n" +
-                    "  3. Run `adb devices` to see connected devices\n" +
-                    "  4. Update udid in config.yaml if using a different device");
+            throw new DeviceNotReadyException(udid);
         }
         log.debug("Device '{}' is ready", udid);
     }
@@ -312,7 +310,7 @@ public class AdbCommands {
                     .map(line -> line.split(DEVICE_SPLIT)[0].trim())
                     .toList();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to list connected devices", e);
+            throw new AdbCommandException("Failed to list connected devices", e);
         }
     }
 
@@ -341,7 +339,7 @@ public class AdbCommands {
             // Multi-line output (logcat) is logged by the caller with [LOGCAT] label
             return output;
         } catch (Exception e) {
-            throw new RuntimeException("ADB command failed: " + String.join(" ", cmd) + " - " + e.getMessage(), e);
+            throw new AdbCommandException(String.join(" ", cmd), e);
         }
     }
 

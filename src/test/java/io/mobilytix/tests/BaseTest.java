@@ -7,6 +7,7 @@ import io.mobilytix.config.ConfigLoader;
 import io.mobilytix.core.AppiumServerManager;
 import io.mobilytix.core.DriverManager;
 import io.mobilytix.core.SessionContext;
+import io.mobilytix.exceptions.AppiumServerException;
 import io.mobilytix.reporting.MobilytixListener;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -145,10 +146,11 @@ public abstract class BaseTest {
         log.info("Running pre-flight checks...");
         String host = ConfigLoader.getInstance().getAppiumHost();
         int port = ConfigLoader.getInstance().getAppiumPort();
-        // Check appium server ready for connections
+        // Check Appium server ready for connections
         if (!AppiumServerManager.getInstance().isServerRunning()) {
-            throw new IllegalStateException(
-                    "Pre-flight failed: Appium server is not running on " + host + ":" + port + "\n" + "Fix: set auto_start: true in config.yaml or start Appium manually.");
+            throw new AppiumServerException(
+                    "Pre-flight failed: Appium server is not running on " + host + ":" + port + "\n" +
+                            "Fix: set auto_start: true in config.yaml or start Appium manually.");
         }
         log.info("Pre-flight: Appium server — OK");
         // Check device/emulator is ready

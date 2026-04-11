@@ -2,6 +2,7 @@ package io.mobilytix.api;
 
 import io.mobilytix.config.AppConfig;
 import io.mobilytix.core.SessionContext;
+import io.mobilytix.exceptions.AuthenticationException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -67,8 +68,8 @@ public class AuthHandler {
             case AUTH_TYPE_BASIC -> handleBasic(username, credential);
             case AUTH_TYPE_OTP -> handleOtp(username, credential, appConfig);
             case AUTH_TYPE_SSO -> handleSso(username, credential, appConfig);
-            default -> throw new IllegalStateException(
-                    "Unknown auth_type: '" + authType + "'. Valid values: none, basic, otp, sso. Check auth_type in config.yaml for app: " + appConfig.getAppName());
+            default -> throw new AuthenticationException(
+                    authType, "unknown auth_type. Valid values: none, basic, otp, sso. Check auth_type in config.yaml for app: " + appConfig.getAppName());
         }
         SessionContext.markAuthenticated();
         log.info("Authentication successful | user: {}", username);

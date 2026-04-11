@@ -4,6 +4,7 @@ import io.appium.java_client.service.local.AppiumDriverLocalService;
 import io.appium.java_client.service.local.AppiumServiceBuilder;
 import io.appium.java_client.service.local.flags.GeneralServerFlag;
 import io.mobilytix.config.ConfigLoader;
+import io.mobilytix.exceptions.AppiumServerException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -97,7 +98,7 @@ public class AppiumServerManager {
         try {
             return new URL("http://" + config.getAppiumHost() + ":" + config.getAppiumPort());
         } catch (Exception e) {
-            throw new RuntimeException("Invalid Appium Server URL in the config", e);
+            throw new AppiumServerException("Invalid Appium Server URL in the config", e);
         }
     }
 
@@ -153,7 +154,7 @@ public class AppiumServerManager {
             log.debug("Server not ready yet — attempt {}/{}", attempts, SERVER_READY_MAX_ATTEMPTS);
             sleep(SERVER_READY_POLL_MS);
         }
-        throw new RuntimeException("Appium server did not become ready after " + SERVER_READY_MAX_ATTEMPTS + " attempts. Check if port " + config.getAppiumPort() + " is available.");
+        throw new AppiumServerException("Appium server did not become ready after " + SERVER_READY_MAX_ATTEMPTS + " attempts. Check if port " + config.getAppiumPort() + " is available.");
     }
 
     private void sleep(int millis) {

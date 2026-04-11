@@ -2,6 +2,7 @@ package io.mobilytix.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import io.mobilytix.exceptions.ConfigException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -89,7 +90,7 @@ public class ConfigLoader {
         try {
             Map<String, Object> apps = (Map<String, Object>) rawConfig.get(KEY_APPS);
             if (apps == null || !apps.containsKey(appKey)) {
-                throw new RuntimeException("No app config found for key: '" + appKey + "'. " + "Check that '" + appKey + "' exists under apps: in config.yaml");
+                throw new ConfigException(appKey, "not found under apps: in config.yaml. " + "Available keys: " + apps.keySet());
             }
             String json = mapper.writeValueAsString(apps.get(appKey));
             AppConfig config = mapper.readValue(json, AppConfig.class);
@@ -98,7 +99,7 @@ public class ConfigLoader {
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to load AppConfig for key: " + appKey, e);
+            throw new ConfigException("Failed to load load config.yaml for key: " + appKey, e.getMessage());
         }
     }
     // Device config
@@ -112,7 +113,7 @@ public class ConfigLoader {
             String json = mapper.writeValueAsString(rawConfig.get(KEY_DEVICE));
             return mapper.readValue(json, DeviceConfig.class);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to load DeviceConfig", e);
+            throw new ConfigException("Failed to load DeviceConfig");
         }
     }
 
@@ -188,11 +189,11 @@ public class ConfigLoader {
         Object current = rawConfig;
         for (String key : keys) {
             if (!(current instanceof Map)) {
-                throw new RuntimeException("Config path broken at key: '" + key + "' - parent is not a map");
+                throw new ConfigException(key, "parent is not a map - check config.yaml structure");
             }
             current = ((Map<String, Object>) current).get(key);
             if (current == null) {
-                throw new RuntimeException("Config key not found: '" + key + "' - check config.yaml");
+                throw new ConfigException("Config key not found: '" + key + "' - check config.yaml");
             }
         }
         return String.valueOf(current).trim();

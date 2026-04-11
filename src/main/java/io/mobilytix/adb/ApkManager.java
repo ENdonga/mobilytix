@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+import io.mobilytix.exceptions.ApkNotFoundException;
 import io.mobilytix.utils.EnvUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -114,7 +115,7 @@ public class ApkManager {
     private Path resolveApkPath(String apkRelativePath) {
         Path resolvedPath = Paths.get(config.getApkBasePath(), apkRelativePath).toAbsolutePath();
         if (!resolvedPath.toFile().exists()) {
-            throw new RuntimeException("APK not found at: " + resolvedPath + ". Ensure the APK is placed in the apks/ folder and " + "apk_path in config.yaml is correct.");
+            throw new ApkNotFoundException(resolvedPath.toString());
         }
         return resolvedPath;
     }

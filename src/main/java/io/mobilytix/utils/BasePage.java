@@ -2,6 +2,7 @@ package io.mobilytix.utils;
 
 import io.appium.java_client.android.AndroidDriver;
 import io.mobilytix.core.DriverManager;
+import io.mobilytix.exceptions.PageNotLoadedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
@@ -185,7 +186,7 @@ public abstract class BasePage {
             }
             scrollDown();
         }
-        throw new RuntimeException("Element not found after " + maxAttempts + " scroll attempts: " + locator);
+        throw new PageNotLoadedException("Element not found after " + maxAttempts + " scroll attempts: " + locator);
     }
 
     /**
