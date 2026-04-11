@@ -7,7 +7,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Singleton configuration loader.
@@ -48,6 +50,7 @@ public class ConfigLoader {
     private static final String KEY_ON_PASS = "on_pass";
     private static final String KEY_SCREEN_RECORDING = "screen_recording";
     private static final String KEY_ENABLED = "enabled";
+    private static final String KEY_PARALLEL_DEVICES = "parallel_devices";
 
     private ConfigLoader() {
         mapper = new ObjectMapper(new YAMLFactory());
@@ -173,7 +176,17 @@ public class ConfigLoader {
         return getNestedValue(KEY_REPORTING, KEY_SCREEN_RECORDING, KEY_OUTPUT_PATH);
     }
 
-    // Internal helper
+    public List<String> getParallelDeviceUdids() {
+        try {
+            List<Map<String, Object>> devices = (List<Map<String, Object>>) rawConfig.get(KEY_PARALLEL_DEVICES);
+            if (devices == null || devices.isEmpty()) {
+                return List.of();
+            }
+            return devices.stream().map(device -> String.valueOf(device.get("udid"))).collect(Collectors.toList());
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
 
     /**
      * Traverses the raw config map by key path.

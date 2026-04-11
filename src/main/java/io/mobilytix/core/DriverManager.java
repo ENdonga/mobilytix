@@ -2,6 +2,7 @@ package io.mobilytix.core;
 
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.options.UiAutomator2Options;
+import io.mobilytix.adb.AdbCommands;
 import io.mobilytix.config.AppConfig;
 import io.mobilytix.config.ConfigLoader;
 import io.mobilytix.config.DeviceConfig;
@@ -14,6 +15,9 @@ import org.openqa.selenium.SessionNotCreatedException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * Manages the AndroidDriver instance per thread.
@@ -35,6 +39,7 @@ public class DriverManager {
 
     private static final Duration IMPLICIT_WAIT = Duration.ZERO;
     private static final String PLATFORM_ANDROID = "Android";
+    private static final AtomicInteger deviceIndex = new AtomicInteger(0);
 
     private DriverManager() {
     }
@@ -144,8 +149,9 @@ public class DriverManager {
      * Builds the UiAutomator2Options capability set from config objects.
      */
     private UiAutomator2Options buildOptions(AppConfig appConfig, DeviceConfig deviceConfig, Path apkPath) {
+        String udid = resolvedUdid(deviceConfig);
         return new UiAutomator2Options()
-                .setUdid(deviceConfig.getUdid())
+                .setUdid(udid)
                 .setPlatformName(PLATFORM_ANDROID)
                 .setPlatformVersion(deviceConfig.getPlatformVersion())
                 .setApp(apkPath.toString())
@@ -155,5 +161,35 @@ public class DriverManager {
                 .setNewCommandTimeout(Duration.ofSeconds(deviceConfig.getNewCommandTimeout()))
                 .setNoReset(deviceConfig.isNoReset())
                 .setFullReset(deviceConfig.isFullReset());
+    }
+
+    private String resolvedUdid(DeviceConfig deviceConfig) {
+        // check if parallel devices are configured
+        List<String> parallelDevices = config.getParallelDeviceUdids();
+        if (parallelDevices.isEmpty()) {
+            // Sequential run — use the single configured device
+            return deviceConfig.getUdid();
+        }
+        // Only apply parallel assignment if running on a worker thread
+        // Sequential runs use the main thread — parallel runs use pool threads
+        boolean isParallelThread = !Thread.currentThread().getName().equals("main");
+
+        if (!isParallelThread) {
+            log.debug("Sequential run detected — using default device: {}", deviceConfig.getUdid());
+            return deviceConfig.getUdid();
+        }
+
+        // Filter to only connected devices
+        List<String> connectedDevices = AdbCommands.listConnectedDevices();
+        List<String> availableDevices = parallelDevices.stream().filter(connectedDevices::contains).collect(Collectors.toList());
+        if (availableDevices.isEmpty()) {
+            log.warn("No Parallel devices connected - falling back to the default device: {}", deviceConfig.getUdid());
+            return deviceConfig.getUdid();
+        }
+        // Parallel run — assign devices round-robin across threads
+        int index = deviceIndex.getAndIncrement() % parallelDevices.size();
+        String assignedUdid = parallelDevices.get(index);
+        log.info("Parallel device assignment | thread: {} | udid: {}", Thread.currentThread(), assignedUdid);
+        return assignedUdid;
     }
 }

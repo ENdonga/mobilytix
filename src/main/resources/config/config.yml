@@ -21,6 +21,7 @@ framework:
     page_load: 30 # How long to wait for a page/screen to load
 
 device:
+  # Default device used for sequential runs
   # Run `adb devices` in your terminal to find your device udid.
   # For an emulator it will look like: emulator-5554
   # For a physical device it will be a serial number e.g. R58M123ABCD
@@ -31,6 +32,12 @@ device:
   new_command_timeout: 300
   no_reset: false
   full_reset: false
+
+# Additional devices for parallel runs
+# Thread 1 uses devices[0], Thread 2 uses devices[1] etc.
+parallel_devices:
+  - udid: "emulator-5554"
+  - udid: "emulator-5556"
 
 # Add a new block here for every app you want to test.
 # The key (e.g. app_a) is what you pass to @AppUnderTest("app_a").
