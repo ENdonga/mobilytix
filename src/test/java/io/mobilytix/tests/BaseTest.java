@@ -1,5 +1,6 @@
 package io.mobilytix.tests;
 
+import io.mobilytix.adb.AdbCommands;
 import io.mobilytix.annotation.AppUnderTest;
 import io.mobilytix.config.AppConfig;
 import io.mobilytix.config.ConfigLoader;
@@ -9,6 +10,7 @@ import io.mobilytix.core.SessionContext;
 import io.mobilytix.reporting.MobilytixListener;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.testng.SkipException;
 import org.testng.annotations.*;
 
 /**
@@ -26,17 +28,20 @@ import org.testng.annotations.*;
  * <p>
  * Lifecycle managed here:
  * @BeforeSuite — start Appium server (if auto_start=true)
- * @BeforeClass — resolve annotation, load config, init driver
+ * @BeforeClass(dependsOnMethods = "setUp") — resolve annotation, load config, init driver
  * @AfterClass — quit driver, clear session
  * @AfterSuite — flush reports, stop Appium server
  * <p>
- * Never put @BeforeSuite or @AfterSuite in a test class —
- * they belong here and run exactly once for the entire suite.
+ * Never put @BeforeSuite or @AfterSuite in a test class they belong here and run exactly once for the entire suite.
+ * Never add alwaysRun = true to @BeforeClass in test classes.
+ * It overrides dependsOnMethods and causes tests to run without a driver.
  */
 @Listeners(MobilytixListener.class)
 public abstract class BaseTest {
     protected final Logger log = LogManager.getLogger(this.getClass());
     private static final String ERROR_MISSING_ANNOTATION = "%s must be annotated with @AppUnderTest. Example: @AppUnderTest(\"app_a\")";
+    private static volatile boolean suiteAborted = false;
+    private static volatile String suiteAbortReason = null;
 
     /**
      * Starts the Appium server before any test class initialises.
@@ -48,7 +53,16 @@ public abstract class BaseTest {
         log.info("========================================");
         log.info("  Mobilytix Suite Starting");
         log.info("========================================");
-        AppiumServerManager.getInstance().startIfRequired();
+        try {
+            AppiumServerManager.getInstance().startIfRequired();
+            assertDeviceAndServerReady();
+        } catch (Exception e) {
+            suiteAborted = true;
+            suiteAbortReason = e.getMessage();
+            log.error("Suite aborted during pre-flight: {}", e.getMessage());
+            throw e;
+        }
+
     }
 
     /**
@@ -75,6 +89,9 @@ public abstract class BaseTest {
      */
     @BeforeClass(alwaysRun = true)
     public void setUp() {
+        if (suiteAborted) {
+            throw new SkipException("Suite aborted during pre-flight checks. Reason: " + suiteAbortReason);
+        }
         AppUnderTest annotation = getClass().getAnnotation(AppUnderTest.class);
         if (annotation == null) {
             throw new IllegalStateException(String.format(ERROR_MISSING_ANNOTATION, getClass().getSimpleName()));
@@ -122,5 +139,21 @@ public abstract class BaseTest {
      */
     protected boolean isAuthenticated() {
         return SessionContext.isAuthenticated();
+    }
+
+    private void assertDeviceAndServerReady() {
+        log.info("Running pre-flight checks...");
+        String host = ConfigLoader.getInstance().getAppiumHost();
+        int port = ConfigLoader.getInstance().getAppiumPort();
+        // Check appium server ready for connections
+        if (!AppiumServerManager.getInstance().isServerRunning()) {
+            throw new IllegalStateException(
+                    "Pre-flight failed: Appium server is not running on " + host + ":" + port + "\n" + "Fix: set auto_start: true in config.yaml or start Appium manually.");
+        }
+        log.info("Pre-flight: Appium server — OK");
+        // Check device/emulator is ready
+        AdbCommands.getInstance().assertDeviceReady();
+        log.info("Pre-flight: Device — OK");
+        log.info("Pre-flight checks passed — starting suite");
     }
 }

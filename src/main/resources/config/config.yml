@@ -8,7 +8,7 @@ framework:
     auto_start: true
     host: "127.0.0.1"
     port: 4723
-    loge_level: "info"
+    log_level: "info"
 
   # Path to the folder containing all APKs, relative to the project root.
   # All app apk_path values below are relative to this base path.

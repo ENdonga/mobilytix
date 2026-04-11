@@ -21,7 +21,7 @@ public class ApkAnalyzerDetailPageTest extends BaseTest {
     private static final String TARGET_APP = "Apk Analyzer";
     private static final String TARGET_PACKAGE = "sk.styk.martin.apkanalyzer";
 
-    @BeforeClass(alwaysRun = true, dependsOnMethods = "setUp")
+    @BeforeClass(dependsOnMethods = "setUp")
     public void setUpPage() {
         AllureAttachments.step("Skip onboarding if present");
         OnboardingPage.getInstance().skipIfPresent();

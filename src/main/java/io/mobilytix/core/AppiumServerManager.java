@@ -29,8 +29,11 @@ public class AppiumServerManager {
     private final ConfigLoader config = ConfigLoader.getInstance();
 
     private static final String STATUS_ENDPOINT = "/status";
+    private static final String REQUEST_METHOD = "GET";
     private static final int CONNECTION_TIMEOUT_MS = 2000;
     private static final int SERVER_START_TIMEOUT_SECONDS = 60;
+    private static final int SERVER_READY_MAX_ATTEMPTS = 5;
+    private static final int SERVER_READY_POLL_MS = 1000;
 
     private AppiumServerManager() {
     }
@@ -64,6 +67,7 @@ public class AppiumServerManager {
         log.info("Starting Appium Server on {}:{}", config.getAppiumHost(), config.getAppiumPort());
         service = buildService();
         service.start();
+        waitForAppiumServerReady();
         log.info("Appium Server started successfully. URL {}", service.getUrl());
     }
 
@@ -116,13 +120,13 @@ public class AppiumServerManager {
      * Returns true if the server responds with HTTP 200.
      * Returns false for any connection failure or non-200 response.
      */
-    private boolean isServerRunning() {
+    public boolean isServerRunning() {
         String statusUrl = "http://" + config.getAppiumHost() + ":" + config.getAppiumPort() + STATUS_ENDPOINT;
         try {
             HttpURLConnection connection = (HttpURLConnection) new URL(statusUrl).openConnection();
             connection.setConnectTimeout(CONNECTION_TIMEOUT_MS);
             connection.setReadTimeout(CONNECTION_TIMEOUT_MS);
-            connection.setRequestMethod("GET");
+            connection.setRequestMethod(REQUEST_METHOD);
             int responseCode = connection.getResponseCode();
             boolean running = responseCode == HttpURLConnection.HTTP_OK;
             log.debug("Appium Server status check at: {} - response: {} - running: {}", statusUrl, responseCode, running);
@@ -130,6 +134,33 @@ public class AppiumServerManager {
         } catch (IOException e) {
             log.error("Appium server status check failed (server is not running): {}", e.getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Polls the /status endpoint until the server responds or timeout is reached.
+     * Prevents driver initialisation from running before server is ready.
+     */
+    private void waitForAppiumServerReady() {
+        log.debug("Waiting for Appium server to be ready...");
+        int attempts = 0;
+        while (attempts < SERVER_READY_MAX_ATTEMPTS) {
+            if (isServerRunning()) {
+                log.info("Appium server ready after {} attempt(s)", attempts + 1);
+                return;
+            }
+            attempts++;
+            log.debug("Server not ready yet — attempt {}/{}", attempts, SERVER_READY_MAX_ATTEMPTS);
+            sleep(SERVER_READY_POLL_MS);
+        }
+        throw new RuntimeException("Appium server did not become ready after " + SERVER_READY_MAX_ATTEMPTS + " attempts. Check if port " + config.getAppiumPort() + " is available.");
+    }
+
+    private void sleep(int millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 }

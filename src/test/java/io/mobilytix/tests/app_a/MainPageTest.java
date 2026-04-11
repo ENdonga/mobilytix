@@ -32,7 +32,7 @@ public class MainPageTest extends BaseTest {
      * Runs after BaseTest.setUp() — driver is ready at this point.
      * Handles onboarding once for all tests in this class.
      */
-    @BeforeClass(alwaysRun = true, dependsOnMethods = "setUp")
+    @BeforeClass(dependsOnMethods = "setUp")
     public void setUpPage() {
         AllureAttachments.step("Skip onboarding if present");
         OnboardingPage.getInstance().skipIfPresent();
