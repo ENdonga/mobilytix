@@ -193,7 +193,7 @@ public class ConfigLoader {
             }
             current = ((Map<String, Object>) current).get(key);
             if (current == null) {
-                throw new ConfigException("Config key not found: '" + key + "' - check config.yaml");
+                throw new ConfigException("Config: '" + key + "' key not found - check config.yaml");
             }
         }
         return String.valueOf(current).trim();
