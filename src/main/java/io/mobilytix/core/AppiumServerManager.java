@@ -58,7 +58,12 @@ public class AppiumServerManager {
      */
     public void startIfRequired() {
         if (!config.isAppiumAutoStart()) {
-            log.info("Appium auto_start=false - skipping server start. Ensure Appium is running manually on {}:{}", config.getAppiumHost(), config.getAppiumPort());
+            if (isServerRunning()) {
+                log.info("auto_start=false — using manually started Appium server on {}:{}", config.getAppiumHost(), config.getAppiumPort());
+            } else {
+                log.warn("auto_start=false — no Appium server detected on {}:{}. " + "Start it manually with: appium --address {} --port {}",
+                        config.getAppiumHost(), config.getAppiumPort(), config.getAppiumHost(), config.getAppiumPort());
+            }
             return;
         }
         if (isServerRunning()) {
