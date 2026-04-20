@@ -19,7 +19,7 @@ import org.openqa.selenium.By;
  * Crash app (debug), Log In
  */
 public class MenuPage extends BasePage {
-    private static final By DRAWER_MENU = LocatorFactory.byId("com.saucelabs.mydemoapp.android:id/drawerMenu");
+    private static final By DRAWER_MENU = LocatorFactory.byAccessibility("View menu");
     private static final By MENU_LOGIN = LocatorFactory.byAccessibility("Login Menu Item");
     private static final By MENU_LOGOUT = LocatorFactory.byAccessibility("Logout Menu Item");
     private static final By MENU_CATALOG = LocatorFactory.byText("Catalog");
@@ -30,6 +30,9 @@ public class MenuPage extends BasePage {
     private static final By DIALOG_CANCEL_BUTTON = LocatorFactory.byText("CANCEL");
     private static final By DIALOG_RESET_SUCCESS_MESSAGE = LocatorFactory.byText("App State has been reset.");
     private static final By DIALOG_OK_BUTTON = LocatorFactory.byText("OK");
+    private static final By LOGOUT_DIALOG_TITLE = LocatorFactory.byText("Log Out");
+    private static final By LOGOUT_DIALOG_CONFIRM = LocatorFactory.byText("LOGOUT");
+    private static final By LOGOUT_DIALOG_CANCEL = LocatorFactory.byText("CANCEL");
 
     private static MenuPage instance;
 
@@ -48,14 +51,52 @@ public class MenuPage extends BasePage {
         return isDisplayed(DRAWER_MENU);
     }
 
+    /**
+     * Navigates to the login screen from the menu.
+     * Handles two states:
+     * - Logged in  → logs out first, then taps Log In
+     * - Logged out → taps Log In directly
+     * <p>
+     * Precondition: menu drawer must already be open.
+     */
     public void navigateToLoginScreen() {
-        if(isDisplayed(MENU_LOGOUT,1)) {
+        if (isDisplayed(MENU_LOGOUT, 1)) {
             log.info("User is logged in — logging out first");
-            tap(MENU_LOGOUT);
-            tap(LocatorFactory.byAccessibility("View menu"));
+            logout();
+            if (LoginPage.getInstance().isLoaded()) {
+                return;
+            }
         }
         log.info("Tap Login Menu Item");
         tap(MENU_LOGIN);
+    }
+
+    /**
+     * Logs the user out via the menu.
+     * Handles the confirmation dialog that appears after tapping Log Out.
+     * After logout the drawer closes automatically.
+     * <p>
+     * Precondition: menu drawer must already be open.
+     */
+    public void logout() {
+        log.info("Tapping logout from the menu");
+        tap(MENU_LOGOUT);
+        log.info("Confirming logout dialog");
+        waitForLogoutDialog();
+        tap(LOGOUT_DIALOG_CONFIRM);
+        log.info("logout complete");
+    }
+
+    public void waitForMenuToOpen() {
+        WaitUtils.waitForVisible(MENU_CATALOG);
+    }
+
+    /**
+     * Waits for the logout confirmation dialog to appear.
+     */
+    public void waitForLogoutDialog() {
+        WaitUtils.waitForVisible(LOGOUT_DIALOG_TITLE);
+        log.debug("Logout confirmation dialog is visible");
     }
 
     public void tapCatalog() {

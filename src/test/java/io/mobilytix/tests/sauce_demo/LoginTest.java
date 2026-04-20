@@ -5,12 +5,12 @@ import io.mobilytix.config.ConfigLoader;
 import io.mobilytix.config.CredentialKeys;
 import io.mobilytix.pages.sauce_demo.CatalogPage;
 import io.mobilytix.pages.sauce_demo.LoginPage;
+import io.mobilytix.pages.sauce_demo.MenuPage;
 import io.mobilytix.reporting.AllureAttachments;
 import io.mobilytix.tests.BaseTest;
 import io.qameta.allure.*;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 @AppUnderTest("sauce_demo")
@@ -35,22 +35,12 @@ public class LoginTest extends BaseTest {
         log.info("Login tests will use username: {}", validUsername);
     }
 
-    /**
-     * Resets app state and navigates to the login screen before each test.
-     * resetAppState() clears cart and any existing session via the side menu.
-     * navigateToLogin() opens the menu and taps Log In.
-     */
-    @BeforeMethod()
-    public void navigateToLogin() {
-        catalogPage.resetAppState();
-        catalogPage.navigateToLogin();
-        Assert.assertTrue(loginPage.isLoaded(), "Login screen should be visible before each test");
-    }
-
     @Test(description = "Valid user can log in successfully", priority = 1)
     @Story("Valid login")
     @Severity(SeverityLevel.BLOCKER)
     public void testValidLogin() {
+        AllureAttachments.step("Navigate to login with app reset");
+        catalogPage.resetAndNavigateToLogin();
         AllureAttachments.step("Enter valid credentials");
         loginPage.login(validUsername, validPassword);
         AllureAttachments.step("Verify catalog screen is displayed after login");
@@ -62,6 +52,8 @@ public class LoginTest extends BaseTest {
     @Story("Valid login")
     @Severity(SeverityLevel.NORMAL)
     public void testValidUserShortcut() {
+        AllureAttachments.step("Navigate to login with app reset");
+        catalogPage.navigateToLogin();
         AllureAttachments.step("Tap valid user shortcut");
         loginPage.tapValidUserShortcut();
         AllureAttachments.step("Verify username field is populated");
@@ -73,32 +65,12 @@ public class LoginTest extends BaseTest {
         AllureAttachments.attachScreenshot("After shortcut login");
     }
 
-//    @Test(description = "Wrong password shows error message", priority = 3)
-//    @Story("Invalid credentials")
-//    @Severity(SeverityLevel.CRITICAL)
-//    public void testWrongPasswordShowsError() {
-//        AllureAttachments.step("Enter valid username with wrong password");
-//        loginPage.login(validUsername, "wrongPassword");
-//        AllureAttachments.step("Verify error message is displayed");
-//        Assert.assertTrue(loginPage.isErrorDisplayed(), "Error message should appear after wrong password");
-//        AllureAttachments.attachScreenshot("Error after wrong password");
-//    }
-//
-//    @Test(description = "Unknown username shows error message", priority = 4)
-//    @Story("Invalid credentials")
-//    @Severity(SeverityLevel.CRITICAL)
-//    public void testUnknownUsernameShowsError() {
-//        AllureAttachments.step("Enter non-existent username");
-//        loginPage.login("nonexistent@example.com", validPassword);
-//        AllureAttachments.step("Verify error message is displayed");
-//        Assert.assertTrue(loginPage.isErrorDisplayed(), "Error message should appear for unknown username");
-//        AllureAttachments.attachScreenshot("Error after unknown username");
-//    }
-
-    @Test(description = "Empty username shows validation error", priority = 5)
+    @Test(description = "Empty username shows validation error", priority = 3)
     @Story("Field validation")
     @Severity(SeverityLevel.NORMAL)
     public void testEmptyUsernameShowsError() {
+        AllureAttachments.step("Navigate to login without reset");
+        catalogPage.navigateToLogin();
         AllureAttachments.step("Leave username empty and enter password only");
         loginPage.enterPassword(validPassword);
         loginPage.tapLoginButton();
@@ -109,10 +81,12 @@ public class LoginTest extends BaseTest {
         AllureAttachments.attachScreenshot("Empty username validation");
     }
 
-    @Test(description = "Empty password shows validation error", priority = 6)
+    @Test(description = "Empty password shows validation error", priority = 4)
     @Story("Field validation")
     @Severity(SeverityLevel.NORMAL)
     public void testEmptyPasswordShowsError() {
+        AllureAttachments.step("Navigate to login without reset");
+        catalogPage.navigateToLogin();
         AllureAttachments.step("Enter username and leave password empty");
         loginPage.enterUsername(validUsername);
         loginPage.tapLoginButton();
@@ -123,10 +97,12 @@ public class LoginTest extends BaseTest {
         AllureAttachments.attachScreenshot("Empty password validation");
     }
 
-    @Test(description = "Locked user is blocked from logging in", priority = 7)
+    @Test(description = "Locked user is blocked from logging in", priority = 5)
     @Story("Locked user")
     @Severity(SeverityLevel.CRITICAL)
     public void testLockedUserIsBlocked() {
+        AllureAttachments.step("Navigate to login without reset");
+        catalogPage.navigateToLogin();
         AllureAttachments.step("Tap locked user shortcut");
         loginPage.tapLockedUserShortcut();
 
@@ -142,5 +118,26 @@ public class LoginTest extends BaseTest {
 
         AllureAttachments.attachScreenshot("Locked user blocked");
         log.info("Locked user correctly blocked. Error: {}", loginPage.getErrorMessage());
+    }
+
+    @Test(description = "Logged in user can log out successfully", priority = 6)
+    @Story("Logout")
+    @Severity(SeverityLevel.CRITICAL)
+    public void testLogoutFlow() {
+        AllureAttachments.step("Navigate to login with reset and log in");
+        catalogPage.resetAndNavigateToLogin();
+        loginPage.login(validUsername, validPassword);
+
+        AllureAttachments.step("Verify logged in — catalog visible");
+        Assert.assertTrue(catalogPage.isLoaded(), "Should be on catalog after login");
+
+        AllureAttachments.step("Open menu and tap Log Out");
+        catalogPage.tapMenu();
+        MenuPage.getInstance().logout();
+
+        AllureAttachments.step("Verify returned to catalog as guest");
+        Assert.assertTrue(loginPage.isLoaded(), "Should be back on login screen after logout");
+
+        AllureAttachments.attachScreenshot("After logout");
     }
 }

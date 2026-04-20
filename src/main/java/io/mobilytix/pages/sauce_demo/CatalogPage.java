@@ -51,8 +51,28 @@ public class CatalogPage extends BasePage {
         tap(CART_BUTTON);
     }
 
+    /**
+     * Strategy 1 — Navigate to login WITH app state reset.
+     * Use when you need a guaranteed clean state (cart cleared, session gone).
+     * Adds extra steps (reset dialog) but ensures full isolation.
+     * <p>
+     * Flow: open menu → reset app state (2 dialogs) → open menu → navigate to login
+     */
+    public void resetAndNavigateToLogin() {
+        log.info("Strategy: reset app state then navigate to login");
+        resetAppState();
+        navigateToLogin();
+    }
+
+    /**
+     * Strategy 2 — Navigate to login WITHOUT app state reset.
+     * Use when you only need to be on the login screen regardless of cart state.
+     * Fewer steps — handles logged in/out state via logout if needed.
+     * <p>
+     * Flow: open menu → logout if logged in → tap Log In
+     */
     public void navigateToLogin() {
-        log.info("Navigating to login page via menu");
+        log.info("Strategy: navigate to login (no reset)");
         tapMenu();
         MenuPage.getInstance().navigateToLoginScreen();
     }
