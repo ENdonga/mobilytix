@@ -35,9 +35,9 @@ device:
 
 # Additional devices for parallel runs
 # Thread 1 uses devices[0], Thread 2 uses devices[1] etc.
-parallel_devices:
-  - udid: "emulator-5554"
-  - udid: "emulator-5556"
+#parallel_devices:
+#  - udid: "emulator-5554"
+#  - udid: "emulator-5556"
 
 # Add a new block here for every app you want to test.
 # The key (e.g. app_a) is what you pass to @AppUnderTest("app_a").
@@ -53,18 +53,18 @@ apps:
     # Set to false if the app can be used without any authentication.
     requires_auth: false
     # auth_type options: otp | sso | basic | none
-    auth_type: "none"
+    auth_type: "magic_link"
     # otp_source options: sms | email | totp
     # Only used when auth_type is otp.
     otp_source: "sms"
 
-  app_b:
-    app_name: "Shopping App"
-    apk_path: "app_b/app_b_v2.1.apk"
-    package_name: "com.example.shopapp"
-    activity: "com.example.shopapp.SplashActivity"
+  sauce_demo:
+    app_name: "Sauce Labs Demo App"
+    apk_path: "sauce_demo/MyDemoAppAndroid.apk"
+    package_name: "com.saucelabs.mydemoapp.android"
+    activity: "com.saucelabs.mydemoapp.android.view.activities.SplashActivity"
     requires_auth: false
-    auth_type: "none"
+    auth_type: "basic"
     otp_source: ""
 
 reporting:

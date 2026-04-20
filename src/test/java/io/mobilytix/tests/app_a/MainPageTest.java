@@ -23,7 +23,7 @@ import org.testng.annotations.Test;
  * Everything else is handled by the framework.
  */
 @AppUnderTest("app_a")
-@Epic("App A")
+@Epic("Apk Analyzer")
 @Feature("Main Screen")
 public class MainPageTest extends BaseTest {
     private MainPage mainPage;

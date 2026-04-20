@@ -54,12 +54,11 @@ public class ConfigLoader {
     private static final String KEY_ENABLED = "enabled";
     private static final String KEY_PARALLEL_DEVICES = "parallel_devices";
 
-    //-------------------------------------------------------------------------
-    // Override key constants
-    // Prop keys  = dot-notation used with -D flag
-    // Env keys   = UPPER_SNAKE used in .env file and OS environment
-    // -------------------------------------------------------------------------
-
+    /**
+     * Override key constants
+     * Prop keys  = dot-notation used with -D flag
+     * Env keys   = UPPER_SNAKE used in .env file and OS environment
+     */
     // Device
     private static final String PROP_DEVICE_UDID = "device.udid";
     private static final String ENV_DEVICE_UDID = "DEVICE_UDID";
@@ -81,7 +80,6 @@ public class ConfigLoader {
     public static final String ENV_OTP_API_TOKEN = "OTP_API_TOKEN";
     public static final String ENV_SSO_USERNAME = "SSO_USERNAME";
     public static final String ENV_SSO_PASSWORD = "SSO_PASSWORD";
-
 
     private ConfigLoader() {
         mapper = new ObjectMapper(new YAMLFactory());
@@ -330,6 +328,43 @@ public class ConfigLoader {
             }
         }
         return String.valueOf(current).trim();
+    }
+
+    /**
+     * Resolves a credential value from three sources in priority order:
+     * 1. System property  -Dkey=value   (command line)
+     * 2. System property  KEY=value     (.env file loaded by EnvLoader)
+     * 3. OS env var       KEY=value     (CI environment)
+     * 4. defaultValue                   (fallback — use only for non-sensitive values)
+     * <p>
+     * To add support for a new credential:
+     * 1. Add a constant to CredentialKeys
+     * 2. Add the key to .env.example
+     * 3. Call this method with the constant — no new getter needed
+     *
+     * @param envKey       the key from CredentialKeys e.g. CredentialKeys.SAUCE_USERNAME
+     * @param defaultValue fallback if not set — pass null for sensitive credentials that must always come from the environment
+     * @return the resolved credential value or defaultValue
+     */
+    public String getCredential(String envKey, String defaultValue) {
+        String fromProp = System.getProperty(envKey);
+        if (fromProp != null && !fromProp.isBlank()) {
+            return fromProp.trim();
+        }
+        String fromEnvProperty = System.getProperty(envKey);
+        if (fromEnvProperty != null && !fromEnvProperty.isBlank()) {
+            return fromEnvProperty.trim();
+        }
+        String fromEnv = System.getenv(envKey);
+        if (fromEnv != null && !fromEnv.isBlank()) {
+            return fromEnv;
+        }
+        if (defaultValue != null) {
+            log.debug("Credential '{}' not set in environment - using default", envKey);
+            return defaultValue;
+        }
+        log.warn("Credential '{}' not set. Set it in .env or as a CI environment variable.", envKey);
+        return null;
     }
 
     /**
