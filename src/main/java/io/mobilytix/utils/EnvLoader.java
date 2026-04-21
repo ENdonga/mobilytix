@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -23,6 +24,7 @@ public class EnvLoader {
     private static final Logger log = LogManager.getLogger(EnvLoader.class);
     private static final String ENV_FILE = ".env";
     private static boolean loaded = false;
+    private static final List<String> SENSITIVE_KEY_PATTERNS = List.of("PASSWORD", "TOKEN", "SECRET", "KEY", "CREDENTIAL", "AUTH", "API");
 
     private EnvLoader() {
     }
@@ -51,13 +53,19 @@ public class EnvLoader {
                 // Only set if not already set by a real environment variable
                 if (System.getenv(k) == null && System.getProperty(k) == null) {
                     System.setProperty(k, v);
-                    log.debug(".env loaded: {}={}", k, v);
+                    log.debug(".env loaded: {}={}", k, maskIfSensitive(k, v));
                 }
             });
-            log.info(".env file loaded from project root");
+            log.info(".env file loaded — {} key(s) registered", props.size());
         } catch (Exception e) {
             log.warn(".env file found but could not be loaded: {}", e.getMessage());
         }
         loaded = true;
+    }
+
+    private static String maskIfSensitive(String key, String value) {
+        String upperKey = key.toUpperCase();
+        boolean isSensitive = SENSITIVE_KEY_PATTERNS.stream().anyMatch(upperKey::contains);
+        return isSensitive ? "[REDACTED]" : value;
     }
 }
