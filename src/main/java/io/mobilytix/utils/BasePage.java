@@ -5,10 +5,8 @@ import io.mobilytix.core.DriverManager;
 import io.mobilytix.exceptions.PageNotLoadedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.openqa.selenium.By;
-import org.openqa.selenium.OutputType;
-import org.openqa.selenium.TakesScreenshot;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
+import org.openqa.selenium.remote.RemoteWebElement;
 
 import java.util.List;
 import java.util.Map;
@@ -29,6 +27,12 @@ import java.util.Map;
  */
 public abstract class BasePage {
     protected final Logger log = LogManager.getLogger(this.getClass());
+
+    public static final String MOBILE_SCROLL = "mobile: scroll";
+    public static final String MOBILE_SCROLL_GESTURE = "mobile: scrollGesture";
+    public static final String DIRECTION = "direction";
+    public static final String DOWN = "down";
+    public static final String UP = "up";
 
     /**
      * Returns the AndroidDriver for the current thread.
@@ -159,7 +163,19 @@ public abstract class BasePage {
      */
     protected void scrollDown() {
         log.debug("Scrolling down");
-        driver().execute("mobile: scroll", Map.of("direction", "down"));
+        driver().executeScript(MOBILE_SCROLL, Map.of(DIRECTION, DOWN));
+    }
+
+    protected void scrollDown(By locator) {
+        log.debug("Scrolling down within: {}", locator);
+        try {
+            driver().executeScript(MOBILE_SCROLL, Map.of(
+                    "strategy", resolveScrollStrategy(locator),
+                    "selector", resolveScrollSelector(locator),
+                    "direction", DOWN));
+        } catch (NoSuchElementException e) {
+            log.debug("Reached end of scrollable container: {}", locator);
+        }
     }
 
     /**
@@ -167,7 +183,17 @@ public abstract class BasePage {
      */
     protected void scrollUp() {
         log.debug("Scrolling up");
-        driver().execute("mobile: scroll", Map.of("direction", "up"));
+        driver().executeScript(MOBILE_SCROLL, Map.of(DIRECTION, UP));
+    }
+
+    protected void scrollUp(By locator) {
+        log.debug("Scrolling up within: {}", locator);
+        WebElement element = find(locator);
+        driver().executeScript(MOBILE_SCROLL_GESTURE, Map.of(
+                "elementId", ((RemoteWebElement) element).getId(),
+                "percent", 3.0,
+                "direction", "up")
+        );
     }
 
     /**
@@ -222,4 +248,46 @@ public abstract class BasePage {
      * @return true if the page is fully loaded and ready for interaction
      */
     public abstract boolean isLoaded();
+
+    /**
+     * Resolves the strategy string required by mobile: scroll.
+     * Supported values: "accessibility id", "class name", "-android uiautomator"
+     * <p>
+     * By.id()              → "-android uiautomator" (resource-id query)
+     * By.accessibilityId() → "accessibility id"
+     * By.className()       → "class name"
+     * By.xpath()           → "-android uiautomator" (closest match)
+     */
+    private String resolveScrollStrategy(By locator) {
+        String raw = locator.toString();
+        if (raw.startsWith("By.id:")) {
+            return "-android uiautomator";
+        }
+        if (raw.startsWith("AppiumBy.accessibility id:")) {
+            return "accessibility id";
+        }
+        if (raw.startsWith("By.className:")) {
+            return "class name";
+        }
+        return "-android uiautomator";
+    }
+
+    /**
+     * Resolves the selector string required by mobile: scroll.
+     * For By.id locators, wraps the value in a UiAutomator resourceId query
+     * since "id" is not a supported strategy for mobile: scroll.
+     */
+    private String resolveScrollSelector(By locator) {
+        String raw = locator.toString();
+        if (raw.startsWith("By.id:")) {
+            String resourceId = raw.substring("By.id:".length()).trim();
+            return "new UiSelector().resourceId(\"" + resourceId + "\")";
+        }
+        int separatorIndex = raw.indexOf(": ");
+        if (separatorIndex == -1) {
+            throw new IllegalArgumentException(
+                    "Cannot extract selector from locator: " + raw);
+        }
+        return raw.substring(separatorIndex + 2).trim();
+    }
 }
