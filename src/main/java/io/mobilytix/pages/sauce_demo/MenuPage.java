@@ -32,7 +32,6 @@ public class MenuPage extends BasePage {
     private static final By DIALOG_OK_BUTTON = LocatorFactory.byText("OK");
     private static final By LOGOUT_DIALOG_TITLE = LocatorFactory.byText("Log Out");
     private static final By LOGOUT_DIALOG_CONFIRM = LocatorFactory.byText("LOGOUT");
-    private static final By LOGOUT_DIALOG_CANCEL = LocatorFactory.byText("CANCEL");
 
     private static MenuPage instance;
 
@@ -67,7 +66,6 @@ public class MenuPage extends BasePage {
                 return;
             }
         }
-        log.info("Tap Login Menu Item");
         tap(MENU_LOGIN);
     }
 
@@ -79,12 +77,9 @@ public class MenuPage extends BasePage {
      * Precondition: menu drawer must already be open.
      */
     public void logout() {
-        log.info("Tapping logout from the menu");
         tap(MENU_LOGOUT);
-        log.info("Confirming logout dialog");
         waitForLogoutDialog();
         tap(LOGOUT_DIALOG_CONFIRM);
-        log.info("logout complete");
     }
 
     public void waitForMenuToOpen() {
@@ -100,33 +95,27 @@ public class MenuPage extends BasePage {
     }
 
     public void tapCatalog() {
-        log.info("Tap Catalog Menu Item");
         tap(MENU_CATALOG);
     }
 
     public void tapWebView() {
-        log.info("Tap Web View Menu Item");
         tap(MENU_WEB_VIEW);
     }
 
     public void tapResetAppState() {
-        log.info("Tap Reset App State");
         tap(MENU_RESET_APP_STATE);
     }
 
     public void resetAppStateAndConfirm() {
-        log.info("Tapping Reset App State and confirming");
         tap(MENU_RESET_APP_STATE);
-        log.info("Resetting app state — step 2: confirm reset dialog");
+        log.debug("Confirming reset dialog");
         tap(DIALOG_RESET_BUTTON);
-        log.info("Resetting app state — step 3: dismiss success dialog");
+        log.debug("Dismissing success notification");
         waitForResetSuccess();
         tap(DIALOG_OK_BUTTON);
-        log.info("App state reset complete");
     }
 
     public void resetAppStateAndCancel() {
-        log.info("Tapping Reset App State and then cancelling");
         tap(MENU_RESET_APP_STATE);
         cancelResetDialog();
     }

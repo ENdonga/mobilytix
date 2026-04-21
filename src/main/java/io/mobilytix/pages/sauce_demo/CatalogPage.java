@@ -15,14 +15,14 @@ import java.util.List;
  * Also accessible without login for browsing.
  */
 public class CatalogPage extends BasePage {
-    private static final By PRODUCT_LIST = LocatorFactory.byId("com.saucelabs.mydemoapp.android:id/productRV");
+    private static final By PRODUCT_LIST = LocatorFactory.byId("productRV");
     private static final By MENU_BUTTON = LocatorFactory.byAccessibility("View menu");
     private static final By CART_BUTTON = LocatorFactory.byAccessibility("View cart");
-    private static final By SORT_BUTTON = LocatorFactory.byId("com.saucelabs.mydemoapp.android:id/sortIV");
+    private static final By SORT_BUTTON = LocatorFactory.byId("sortIV");
     private static final By PRODUCT_TITLE = LocatorFactory.byAccessibility("Product Title");
     private static final By PRODUCT_PRICE = LocatorFactory.byAccessibility("Product Price");
-    private static final By SCROLL_VIEW = LocatorFactory.byId("com.saucelabs.mydemoapp.android:id/scrollView");
-    private static final By FOOTER_SECTION = LocatorFactory.byId("com.saucelabs.mydemoapp.android:id/socialLL");
+    private static final By SCROLL_VIEW = LocatorFactory.byId("scrollView");
+    private static final By FOOTER_SECTION = LocatorFactory.byId("socialLL");
 
     private static CatalogPage instance;
 
@@ -43,36 +43,33 @@ public class CatalogPage extends BasePage {
 
     // Navigation
     public CatalogPage tapMenu() {
-        log.info("Opening side menu");
         tap(MENU_BUTTON);
         return this;
     }
 
     public void tapCart() {
-        log.info("Tapping cart...");
         tap(CART_BUTTON);
     }
 
     public void tapSortButton() {
-        log.info("Opening sort dialog..");
         tap(SORT_BUTTON);
     }
 
     /**
-     * Strategy 1 - Navigate to login WITH app state reset.
+     * Strategy 1 - Navigate to log in WITH app state reset.
      * Use when you need a guaranteed clean state (cart cleared, session gone).
      * Adds extra steps (reset dialog) but ensures full isolation.
      * <p>
      * Flow: open menu → reset app state (2 dialogs) → open menu → navigate to login
      */
     public void resetAndNavigateToLogin() {
-        log.info("Strategy: reset app state then navigate to login");
+        log.info("Navigating to login with full App State Reset");
         resetAppState();
         navigateToLogin();
     }
 
     /**
-     * Strategy 2 - Navigate to login WITHOUT app state reset.
+     * Strategy 2 - Navigate to log in WITHOUT app state reset.
      * Use when you only need to be on the login screen regardless of cart state.
      * Fewer steps - handles logged in/out state via logout if needed.
      * <p>
@@ -85,7 +82,6 @@ public class CatalogPage extends BasePage {
     }
 
     public void resetAppState() {
-        log.info("Resetting app state via menu");
         tapMenu();
         MenuPage.getInstance().resetAppStateAndConfirm();
     }

@@ -1,6 +1,7 @@
 package io.mobilytix.utils;
 
 import io.appium.java_client.AppiumBy;
+import io.mobilytix.core.SessionContext;
 import org.openqa.selenium.By;
 
 /**
@@ -37,16 +38,54 @@ public class LocatorFactory {
     }
 
     /**
-     * Locates by resource-id.
-     * Most stable strategy — use this first whenever an element has an ID.
+     * Builds a resource-id locator using the current app's package name from SessionContext.
+     * Use for standard app elements.
      * <p>
-     * Example:
-     * LocatorFactory.byId("sk.styk.martin.apkanalyzer:id/app_name")
-     *
-     * @param resourceId the full resource-id e.g. "com.example:id/button"
+     * LocatorFactory.byId("productRV")
+     * → com.saucelabs.mydemoapp.android:id/productRV
      */
     public static By byId(String resourceId) {
-        return By.id(resourceId);
+        String packageName = SessionContext.getAppConfig().getPackageName();
+        return AppiumBy.id(packageName + ":id/" + resourceId);
+    }
+
+    /**
+     * Builds a resource-id locator using an explicit package name.
+     * Use when targeting system UI elements outside the app package
+     * e.g. LocatorFactory.byId("android", "search_src_text")
+     *
+     * @param packageName the package name e.g. "android"
+     * @param resourceId  the element id after ":id/"
+     */
+    public static By byId(String packageName, String resourceId) {
+        return AppiumBy.id(packageName + ":id/" + resourceId);
+    }
+
+    /**
+     * Builds a resource-id locator from a fully qualified id.
+     * Use when you want to pass the complete resource-id as-is.
+     * <p>
+     * LocatorFactory.byFullId("android:id/search_src_text")
+     * → android:id/search_src_text
+     * <p>
+     * LocatorFactory.byFullId("sk.styk.martin.apkanalyzer:id/app_package_name")
+     * → sk.styk.martin.apkanalyzer:id/app_package_name
+     */
+    public static By byFullId(String fullyQualifiedId) {
+        return AppiumBy.id(fullyQualifiedId);
+    }
+
+    /**
+     * Builds a UiAutomator locator for a child element at a specific index.
+     * Example: LocatorFactory.byChildIndex("recycler_view_app_list", 0)
+     * <p>
+     * Outputs -> new UiSelector().resourceId(\"sk.styk.martin.apkanalyzer:id/recycler_view_app_list\").childSelector(new UiSelector().index(0))"
+     */
+    public static By byChildIndex(String parentResourceId, int index) {
+        String packageName = SessionContext.getAppConfig().getPackageName();
+        String fullParentId = packageName + ":id/" + parentResourceId;
+
+        return AppiumBy.androidUIAutomator(String.format("new UiSelector().resourceId(\"%s\").childSelector(new UiSelector().index(%d))", fullParentId, index));
     }
 
     /**

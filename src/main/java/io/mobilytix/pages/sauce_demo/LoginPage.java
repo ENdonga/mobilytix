@@ -13,15 +13,13 @@ import org.openqa.selenium.By;
  * - enterUsername() + enterPassword() + tapLoginButton() for manual entry
  */
 public class LoginPage extends BasePage {
-    private static final By USERNAME_FIELD = LocatorFactory.byId("com.saucelabs.mydemoapp.android:id/nameET");
-    private static final By PASSWORD_FIELD = LocatorFactory.byId("com.saucelabs.mydemoapp.android:id/passwordET");
+    private static final By USERNAME_FIELD = LocatorFactory.byId("nameET");
+    private static final By PASSWORD_FIELD = LocatorFactory.byId("passwordET");
     private static final By LOGIN_BUTTON = LocatorFactory.byAccessibility("Tap to login with given credentials");
-    private static final By LOGIN_TITLE = LocatorFactory.byId("com.saucelabs.mydemoapp.android:id/loginTV");
-    private static final By USERNAME_SHORTCUT_1 = LocatorFactory.byId("com.saucelabs.mydemoapp.android:id/username1TV");
-    private static final By USERNAME_SHORTCUT_2 = LocatorFactory.byId("com.saucelabs.mydemoapp.android:id/username2TV");
-    private static final By USERNAME_SHORTCUT_3 = LocatorFactory.byAccessibility("Visual User Login");
-    private static final By PASSWORD_ERROR_MESSAGE = LocatorFactory.byId("com.saucelabs.mydemoapp.android:id/passwordErrorTV");
-    private static final By USERNAME_ERROR_MESSAGE = LocatorFactory.byId("com.saucelabs.mydemoapp.android:id/nameErrorTV");
+    private static final By USERNAME_SHORTCUT_1 = LocatorFactory.byId("username1TV");
+    private static final By USERNAME_SHORTCUT_2 = LocatorFactory.byId("username2TV");
+    private static final By PASSWORD_ERROR_MESSAGE = LocatorFactory.byId("passwordErrorTV");
+    private static final By USERNAME_ERROR_MESSAGE = LocatorFactory.byId("nameErrorTV");
 
     private static LoginPage instance;
 
@@ -47,6 +45,7 @@ public class LoginPage extends BasePage {
      * @param password the password
      */
     public void login(String username, String password) {
+        log.info("Attempting login for user: {}", username);
         enterUsername(username);
         enterPassword(password);
         tapLoginButton();
@@ -59,19 +58,16 @@ public class LoginPage extends BasePage {
      * @return this page for chaining
      */
     public LoginPage enterUsername(String username) {
-        log.info("Entering username: {}", username);
         type(USERNAME_FIELD, username);
         return this;
     }
 
     public LoginPage enterPassword(String password) {
-        log.info("Entering password: [REDACTED]");
-        type(PASSWORD_FIELD, password);
+        typeSecret(PASSWORD_FIELD, password);
         return this;
     }
 
     public void tapLoginButton() {
-        log.info("Tap to login with given credentials");
         tap(LOGIN_BUTTON);
     }
 
@@ -80,13 +76,11 @@ public class LoginPage extends BasePage {
      * Auto-populates username and password fields.
      */
     public LoginPage tapValidUserShortcut() {
-        log.info("Tapping valid user shortcut");
         tap(USERNAME_SHORTCUT_1);
         return this;
     }
 
     public LoginPage tapLockedUserShortcut() {
-        log.info("Tapping locked user shortcut");
         tap(USERNAME_SHORTCUT_2);
         return this;
     }

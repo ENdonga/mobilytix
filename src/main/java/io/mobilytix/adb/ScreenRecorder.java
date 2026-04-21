@@ -89,8 +89,7 @@ public class ScreenRecorder {
         log.info("Starting screen recording: {}", currentDevicePath);
 
         recording = true;
-        recordingThread = new Thread(() ->
-                adb.shell(CMD_SCREEN_RECORD, currentDevicePath));
+        recordingThread = new Thread(() -> adb.shell(CMD_SCREEN_RECORD, currentDevicePath));
         recordingThread.setDaemon(true);
         recordingThread.start();
 

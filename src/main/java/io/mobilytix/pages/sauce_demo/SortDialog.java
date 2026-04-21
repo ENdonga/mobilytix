@@ -11,7 +11,6 @@ public class SortDialog extends BasePage {
     private static final By SORT_NAME_DESCENDING = LocatorFactory.byAccessibility("Descending order by name");
     private static final By SORT_PRICE_ASCENDING = LocatorFactory.byAccessibility("Ascending order by price");
     private static final By SORT_PRICE_DESCENDING = LocatorFactory.byAccessibility("Descending order by price");
-    private static final By SELECTED_TICK = LocatorFactory.byId("com.saucelabs.mydemoapp.android:id/tickNameAscIV");
 
     private static SortDialog instance;
 
@@ -31,25 +30,25 @@ public class SortDialog extends BasePage {
     }
 
     public void selectNameAscending() {
-        log.info("Selecting sort: Name - Ascending");
+        log.debug("Sort: Name (A-Z)");
         waitForDialogToOpen();
         tap(SORT_NAME_ASCENDING);
     }
 
     public void selectNameDescending() {
-        log.info("Selecting sort: Name - Descending");
+        log.debug("Sort: Name (Z-A)");
         waitForDialogToOpen();
         tap(SORT_NAME_DESCENDING);
     }
 
     public void selectPriceAscending() {
-        log.info("Selecting sort: Price - Ascending");
+        log.debug("Selecting sort: Price - Ascending");
         waitForDialogToOpen();
         tap(SORT_PRICE_ASCENDING);
     }
 
     public void selectPriceDescending() {
-        log.info("Selecting sort: Price - Descending");
+        log.debug("Selecting sort: Price - Descending");
         waitForDialogToOpen();
         tap(SORT_PRICE_DESCENDING);
     }

@@ -64,9 +64,9 @@ public class ConfigLoader {
     private static final String PROP_SCREEN_RECORDING_ENABLED = "screen.recording.enabled";
     private static final String ENV_SCREEN_RECORDING_ENABLED = "SCREEN_RECORDING_ENABLED";
     // Authentication — credentials only come from env, never config.yaml
-    public static final String ENV_OTP_API_TOKEN = "OTP_API_TOKEN";
-    public static final String ENV_SSO_USERNAME = "SSO_USERNAME";
-    public static final String ENV_SSO_PASSWORD = "SSO_PASSWORD";
+    private static final String ENV_OTP_API_TOKEN = "OTP_API_TOKEN";
+    private static final String ENV_SSO_USERNAME = "SSO_USERNAME";
+    private static final String ENV_SSO_PASSWORD = "SSO_PASSWORD";
 
     private ConfigLoader() {
         mapper = new ObjectMapper(new YAMLFactory());

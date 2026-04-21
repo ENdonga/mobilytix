@@ -9,9 +9,8 @@ import org.openqa.selenium.By;
  * Shown after tapping an app entry in the main list.
  */
 public class ApkAnalyzerDetailPage extends BasePage {
-    private static final By APP_NAME_HEADER = LocatorFactory.byId("sk.styk.martin.apkanalyzer:id/app_package_name");
+    private static final By APP_NAME_HEADER = LocatorFactory.byId("app_package_name");
     private static final By APPLICATION_NAME_VALUE = LocatorFactory.byText("Apk Analyzer");
-    private static final By PACKAGE_NAME_HEADER = LocatorFactory.byText("Package Name");
     private static final By VERSION_NAME = LocatorFactory.byText("3.4.0");
     private static final By BACK_BUTTON = LocatorFactory.byUiAutomator("new UiSelector().className(\"android.widget.ImageButton\")");
     // Tab labels
@@ -48,7 +47,6 @@ public class ApkAnalyzerDetailPage extends BasePage {
      * Taps the General tab.
      */
     public ApkAnalyzerDetailPage tapGeneralTab() {
-        log.info("Tapping General tab");
         tap(GENERAL_TAB);
         return this;
     }
@@ -57,7 +55,6 @@ public class ApkAnalyzerDetailPage extends BasePage {
      * Taps the Certificate tab.
      */
     public ApkAnalyzerDetailPage tapCertificateTab() {
-        log.info("Tapping Certificate tab");
         tap(CERTIFICATE_TAB);
         return this;
     }
@@ -66,7 +63,6 @@ public class ApkAnalyzerDetailPage extends BasePage {
      * Taps the Used Permissions tab.
      */
     public ApkAnalyzerDetailPage tapPermissionsTab() {
-        log.info("Tapping Used Permissions tab");
         tap(PERMISSIONS_TAB);
         return this;
     }
@@ -75,7 +71,6 @@ public class ApkAnalyzerDetailPage extends BasePage {
      * Taps the Activities tab.
      */
     public ApkAnalyzerDetailPage tapActivitiesTab() {
-        log.info("Tapping Activities tab");
         tap(ACTIVITIES_TAB);
         return this;
     }

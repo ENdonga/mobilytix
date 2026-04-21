@@ -30,7 +30,7 @@ public class AppiumServerManager {
     private final ConfigLoader config = ConfigLoader.getInstance();
 
     private static final String STATUS_ENDPOINT = "/status";
-    private static final String REQUEST_METHOD = "GET";
+    private static final String REQUEST_METHOD_GET = "GET";
     private static final int CONNECTION_TIMEOUT_MS = 2000;
     private static final int SERVER_START_TIMEOUT_SECONDS = 60;
     private static final int SERVER_READY_MAX_ATTEMPTS = 5;
@@ -61,7 +61,7 @@ public class AppiumServerManager {
             if (isServerRunning()) {
                 log.info("auto_start=false — using manually started Appium server on {}:{}", config.getAppiumHost(), config.getAppiumPort());
             } else {
-                log.warn("auto_start=false — no Appium server detected on {}:{}. " + "Start it manually with: appium --address {} --port {}",
+                log.warn("auto_start=false — no Appium server detected on {}:{}. Start it manually with: appium --address {} --port {}",
                         config.getAppiumHost(), config.getAppiumPort(), config.getAppiumHost(), config.getAppiumPort());
             }
             return;
@@ -71,7 +71,7 @@ public class AppiumServerManager {
             return;
         }
         log.info("Starting Appium server on {}:{} — override source: {}", config.getAppiumHost(), config.getAppiumPort(),
-                config.getAppiumPort() != 4723 ? "override" : "config.yaml default");
+                config.getAppiumPort() != 4723 ? "env file" : "config.yaml default");
         service = buildService();
         service.start();
         waitForAppiumServerReady();
@@ -85,7 +85,6 @@ public class AppiumServerManager {
      */
     public void stop() {
         if (service != null && service.isRunning()) {
-            log.info("Stopping Appium Server in 3,2,1...");
             service.stop();
             log.info("Appium Server stopped successfully");
         } else {
@@ -133,7 +132,7 @@ public class AppiumServerManager {
             HttpURLConnection connection = (HttpURLConnection) new URL(statusUrl).openConnection();
             connection.setConnectTimeout(CONNECTION_TIMEOUT_MS);
             connection.setReadTimeout(CONNECTION_TIMEOUT_MS);
-            connection.setRequestMethod(REQUEST_METHOD);
+            connection.setRequestMethod(REQUEST_METHOD_GET);
             int responseCode = connection.getResponseCode();
             boolean running = responseCode == HttpURLConnection.HTTP_OK;
             log.debug("Appium Server status check at: {} - response: {} - running: {}", statusUrl, responseCode, running);

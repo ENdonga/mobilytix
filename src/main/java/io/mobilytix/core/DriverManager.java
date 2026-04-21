@@ -75,7 +75,6 @@ public class DriverManager {
 
         try {
             AndroidDriver driver = new AndroidDriver(AppiumServerManager.getInstance().getServiceUrl(), options);
-            // Explicit waits only — implicit wait interferes with expected condition checks like waitForInvisible
             driver.manage().timeouts().implicitlyWait(IMPLICIT_WAIT);
             driverThread.set(driver);
             log.info("Driver initialized successfully. Session ID: {}", driver.getSessionId());

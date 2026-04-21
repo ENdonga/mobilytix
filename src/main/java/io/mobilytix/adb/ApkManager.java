@@ -52,7 +52,6 @@ public class ApkManager {
     public void install(String appKey) {
         AppConfig appConfig = config.getAppConfig(appKey);
         Path apkPath = resolveApkPath(appConfig.getApkPath());
-        log.info("Installing '{}' from: {}", appConfig.getAppName(), apkPath);
         installFromPath(apkPath.toString());
         log.info("Installation complete for: {}", appConfig.getAppName());
     }

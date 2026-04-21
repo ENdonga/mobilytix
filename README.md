@@ -82,9 +82,10 @@ Used for framework smoke testing — no login required.
 **Download:**
 [https://www.apkmirror.com/apk/martin-styk/apk-analyzer/apk-analyzer-3-4-0-release/apk-analyzer-3-4-0-2-android-apk-download/download/?key=751552fe95c00b4d1f06becb6534b9d98fe24da9&forcebaseapk=true](https://www.apkmirror.com/apk/martin-styk/apk-analyzer/apk-analyzer-3-4-0-release/apk-analyzer-3-4-0-2-android-apk-download/download/?key=751552fe95c00b4d1f06becb6534b9d98fe24da9&forcebaseapk=true)
 
-> APK Analyzer is already available on Android emulators — pull it
-> directly from your running emulator with:
-> ```bash
-> adb shell pm path sk.styk.martin.apkanalyzer
-> adb pull <path-from-above> apks/app_a/apkanalyzer.apk
-> ```
+ ```bash
+adb shell pm path sk.styk.martin.apkanalyzer
+adb pull <path-from-above> apks/app_a/apkanalyzer.apk
+```
+### Test lifecycle
+
+![img.png](img.png)

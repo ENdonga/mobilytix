@@ -84,7 +84,7 @@ public class AppSwitcher {
     }
 
     /**
-     * Brings the current app to the foreground if it was backgrounded.
+     * Brings the current app to the foreground if it was in the background.
      * Does nothing if the app is already in the foreground.
      */
     public void bringToForeground() {

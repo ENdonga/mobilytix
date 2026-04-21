@@ -11,7 +11,7 @@ import org.openqa.selenium.By;
  * encounter onboarding.
  */
 public class OnboardingPage extends BasePage {
-    private static final By SKIP_BUTTON = LocatorFactory.byId("sk.styk.martin.apkanalyzer:id/skip");
+    private static final By SKIP_BUTTON = LocatorFactory.byId("skip");
     private static final By NEXT_BUTTON = LocatorFactory.byText("NEXT");
     private static final By GET_STARTED = LocatorFactory.byText("GET STARTED");
 

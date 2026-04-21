@@ -69,7 +69,7 @@ public abstract class BasePage {
      * @param locator the By locator
      */
     protected void tap(By locator) {
-        log.debug("Tap: {}", locator);
+        log.info("Tap: {}", locator);
         WaitUtils.waitForClickable(locator).click();
     }
 
@@ -81,10 +81,17 @@ public abstract class BasePage {
      * @param text    the text to type
      */
     protected void type(By locator, String text) {
-        log.debug("Typing: '{}' into: {}", text, locator);
-        WebElement field = WaitUtils.waitForClickable(locator);
-        field.clear();
-        field.sendKeys(text);
+        log.info("Typing: '{}' into: {}", text, locator);
+        performType(locator, text);
+    }
+
+    /**
+     * Secure typing for passwords, CVVs, or API keys.
+     * Masks the value in logs while sending the actual value to the app.
+     */
+    protected void typeSecret(By locator, String secretText) {
+        log.info("Typing: '*******' into: {}", locator);
+        performType(locator, secretText);
     }
 
     /**
@@ -167,7 +174,7 @@ public abstract class BasePage {
     }
 
     protected void scrollDown(By locator) {
-        log.debug("Scrolling down within: {}", locator);
+        log.info("Scrolling down within: {}", locator);
         try {
             driver().executeScript(MOBILE_SCROLL, Map.of(
                     "strategy", resolveScrollStrategy(locator),
@@ -187,7 +194,7 @@ public abstract class BasePage {
     }
 
     protected void scrollUp(By locator) {
-        log.debug("Scrolling up within: {}", locator);
+        log.info("Scrolling up within: {}", locator);
         WebElement element = find(locator);
         driver().executeScript(MOBILE_SCROLL_GESTURE, Map.of(
                 "elementId", ((RemoteWebElement) element).getId(),
@@ -249,6 +256,12 @@ public abstract class BasePage {
      */
     public abstract boolean isLoaded();
 
+    private void performType(By locator, String text) {
+        WebElement field = WaitUtils.waitForClickable(locator);
+        field.clear();
+        field.sendKeys(text);
+    }
+
     /**
      * Resolves the strategy string required by mobile: scroll.
      * Supported values: "accessibility id", "class name", "-android uiautomator"
@@ -260,10 +273,10 @@ public abstract class BasePage {
      */
     private String resolveScrollStrategy(By locator) {
         String raw = locator.toString();
-        if (raw.startsWith("By.id:")) {
+        if (raw.startsWith("By.id:") || raw.startsWith("AppiumBy.id:")) {
             return "-android uiautomator";
         }
-        if (raw.startsWith("AppiumBy.accessibility id:")) {
+        if (raw.startsWith("AppiumBy.accessibility id:") || raw.startsWith("By.accessibility id:")) {
             return "accessibility id";
         }
         if (raw.startsWith("By.className:")) {
@@ -279,8 +292,9 @@ public abstract class BasePage {
      */
     private String resolveScrollSelector(By locator) {
         String raw = locator.toString();
-        if (raw.startsWith("By.id:")) {
-            String resourceId = raw.substring("By.id:".length()).trim();
+        if (raw.startsWith("By.id:") || raw.startsWith("AppiumBy.id:")) {
+            String prefix = raw.startsWith("By.id:") ? "By.id:" : "AppiumBy.id:";
+            String resourceId = raw.substring(prefix.length()).trim();
             return "new UiSelector().resourceId(\"" + resourceId + "\")";
         }
         int separatorIndex = raw.indexOf(": ");
