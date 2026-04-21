@@ -65,8 +65,7 @@ public class DriverManager {
      * @param appKey the app key from @AppUnderTest annotation
      * @throws SessionNotCreatedException if Appium cannot create the session
      */
-    public void initDriver(String appKey) {
-        AppConfig appConfig = config.getAppConfig(appKey);
+    public void initDriver(String appKey, AppConfig appConfig) {
         DeviceConfig deviceConfig = config.getDeviceConfig();
 
         Path apkAbsolutePath = resolveApkPath(appConfig.getApkPath());

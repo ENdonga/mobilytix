@@ -46,7 +46,7 @@ public class AllureAttachments {
      */
     @Step("{stepDescription}")
     public static void step(String stepDescription) {
-        log.debug("Step: {}", stepDescription);
+        log.trace("Step: {}", stepDescription);
     }
 
     /**
@@ -59,7 +59,7 @@ public class AllureAttachments {
         try {
             byte[] screenshot = captureScreenshot();
             Allure.addAttachment(name, MIME_PNG, new ByteArrayInputStream(screenshot), EXT_PNG);
-            log.debug("Screenshot attached to Allure: {}", name);
+            log.trace("Screenshot attached to Allure: {}", name);
         } catch (Exception e) {
             log.warn("Failed to attach screenshot '{}': {}", name, e.getMessage());
         }
@@ -90,7 +90,7 @@ public class AllureAttachments {
     public static void attachText(String name, String content) {
         try {
             Allure.addAttachment(name, MIME_TEXT, new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)), EXT_TXT);
-            log.debug("Text attached to Allure: {}", name);
+            log.trace("Text attached to Allure: {}", name);
         } catch (Exception e) {
             log.warn("Failed to attach text '{}': {}", name, e.getMessage());
         }
@@ -106,7 +106,7 @@ public class AllureAttachments {
     public static void attachLogcat(String name, String logcat) {
         try {
             Allure.addAttachment(name, MIME_TEXT, new ByteArrayInputStream(logcat.getBytes(StandardCharsets.UTF_8)), EXT_LOG);
-            log.debug("Logcat attached to Allure: {}", name);
+            log.trace("Logcat attached to Allure: {}", name);
         } catch (Exception e) {
             log.warn("Failed to attach logcat '{}': {}", name, e.getMessage());
         }

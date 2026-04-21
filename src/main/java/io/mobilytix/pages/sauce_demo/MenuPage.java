@@ -91,7 +91,7 @@ public class MenuPage extends BasePage {
      */
     public void waitForLogoutDialog() {
         WaitUtils.waitForVisible(LOGOUT_DIALOG_TITLE);
-        log.debug("Logout confirmation dialog is visible");
+        log.trace("Logout confirmation dialog is visible");
     }
 
     public void tapCatalog() {
@@ -110,7 +110,7 @@ public class MenuPage extends BasePage {
         tap(MENU_RESET_APP_STATE);
         log.debug("Confirming reset dialog");
         tap(DIALOG_RESET_BUTTON);
-        log.debug("Dismissing success notification");
+        log.trace("Dismissing success notification");
         waitForResetSuccess();
         tap(DIALOG_OK_BUTTON);
     }

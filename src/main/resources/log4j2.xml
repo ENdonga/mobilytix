@@ -1,106 +1,65 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN" monitorInterval="30">
-    <!--
-        status="WARN" — Log4j2's own internal logging level.
-        Only shows warnings about Log4j2 itself, not your app logs.
-        monitorInterval="30" — checks for config file changes every 30s.
-        Useful in long test runs — change log level without restarting.
-    -->
 
     <Properties>
-        <!-- Reusable values — reference with ${prop:NAME} -->
         <Property name="LOG_DIR">target/logs</Property>
         <Property name="LOG_FILE">${LOG_DIR}/mobilytix.log</Property>
         <Property name="ARCHIVE_PATTERN">${LOG_DIR}/mobilytix-%d{yyyy-MM-dd}-%i.log.gz</Property>
         <Property name="MAX_FILE_SIZE">10MB</Property>
         <Property name="MAX_HISTORY">5</Property>
-        <!--
-            Console pattern — includes thread name for parallel run debugging
-            Format: HH:mm:ss.SSS [thread] LEVEL [logger] — message
-            Example: 12:34:56.789 [main] INFO  [DriverManager] — Driver initialised
-        -->
         <Property name="CONSOLE_PATTERN">%d{HH:mm:ss.SSS} [%t] %-5level [%logger{36}] — %msg%n</Property>
-        <!--
-            File pattern — includes full date for log file analysis
-            Format: yyyy-MM-dd HH:mm:ss.SSS [thread] LEVEL [logger] — message
-        -->
         <Property name="FILE_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level [%logger{36}] — %msg%n</Property>
     </Properties>
 
     <Appenders>
         <!--
-            Console appender — writes to stdout.
-            Visible in IntelliJ run window and CI build logs.
+            Console — INFO and above only.
+            ThresholdFilter blocks DEBUG from appearing in terminal.
+            File gets everything including DEBUG for post-run analysis.
         -->
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="${CONSOLE_PATTERN}"/>
+            <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
         </Console>
-        <!--
-            Rolling file appender — writes to target/logs/mobilytix.log.
-            Rolls over when the file reaches MAX_FILE_SIZE or at midnight.
-            Keeps the last MAX_HISTORY compressed archives.
-            The target/ directory is excluded from Git so logs are never committed.
-        -->
+
         <RollingFile name="File" fileName="${LOG_FILE}" filePattern="${ARCHIVE_PATTERN}">
             <PatternLayout pattern="${FILE_PATTERN}"/>
             <Policies>
-                <!-- Roll over at midnight -->
                 <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
-                <!-- Roll over when file reaches 10MB -->
                 <SizeBasedTriggeringPolicy size="${MAX_FILE_SIZE}"/>
             </Policies>
-            <!-- Keep last 5 compressed archives -->
             <DefaultRolloverStrategy max="${MAX_HISTORY}"/>
         </RollingFile>
-
     </Appenders>
 
     <Loggers>
         <!--
-            Framework logger — covers all io.mobilytix.* classes.
-            Set to DEBUG during development for full visibility.
-            Change to INFO for CI runs to reduce log volume.
-            additivity="false" — prevents log lines appearing twice
-            (once here and once in the root logger).
+            Framework logger — DEBUG goes to file only, INFO+ goes to both.
         -->
         <Logger name="io.mobilytix" level="DEBUG" additivity="false">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File"/>
         </Logger>
-        <!--
-            Appium client logger — set to INFO to suppress DEBUG noise
-            from the Appium Java client's internal HTTP request logging.
-            Change to DEBUG only when diagnosing Appium connection issues.
-        -->
+
         <Logger name="io.appium" level="INFO" additivity="false">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File"/>
         </Logger>
-        <!--
-            Selenium logger — set to WARN to suppress the high-volume
-            RemoteWebDriver HTTP traffic logs that appear at INFO level.
-        -->
+
         <Logger name="org.openqa.selenium" level="WARN" additivity="false">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File"/>
         </Logger>
-        <!--
-            TestNG logger — set to WARN to suppress TestNG's own
-            verbose output about test discovery and configuration.
-        -->
+
         <Logger name="org.testng" level="WARN" additivity="false">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File"/>
         </Logger>
-        <!--
-            Root logger — catches everything not matched by the loggers above.
-            Set to WARN so third-party libraries do not flood the output.
-        -->
+
         <Root level="WARN">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File"/>
         </Root>
-
     </Loggers>
 
 </Configuration>

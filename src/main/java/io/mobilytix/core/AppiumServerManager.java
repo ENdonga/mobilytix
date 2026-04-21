@@ -88,7 +88,7 @@ public class AppiumServerManager {
             service.stop();
             log.info("Appium Server stopped successfully");
         } else {
-            log.debug("Could not managed stopping Appium server. Investigate this.");
+            log.warn("Could not stop Appium server — it may have been started externally. Stop it manually if needed.");
         }
     }
 

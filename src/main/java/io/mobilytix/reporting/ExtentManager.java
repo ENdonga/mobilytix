@@ -68,7 +68,7 @@ public class ExtentManager {
     public static synchronized void createTest(String testName, String appKey) {
         ExtentTest test = getInstance().createTest(testName).assignCategory(appKey);
         testThread.set(test);
-        log.debug("ExtentTest created: {} [{}]", testName, appKey);
+        log.trace("ExtentTest created: {} [{}]", testName, appKey);
     }
 
     /**

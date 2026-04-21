@@ -76,7 +76,6 @@ public class AdbCommands {
         this.udid = ConfigLoader.getInstance().getDeviceConfig().getUdid();
         adbPath = EnvUtils.resolveAdbPath();
         log.debug("AdbCommands initialised | device: {} | adb: {}", udid, adbPath);
-        assertDeviceReady();
     }
 
     /**
@@ -116,7 +115,6 @@ public class AdbCommands {
         if (!isDeviceReady()) {
             throw new DeviceNotReadyException(udid);
         }
-        log.debug("Device '{}' is ready", udid);
     }
 
     /**
@@ -323,7 +321,7 @@ public class AdbCommands {
      * @throws RuntimeException if the process cannot be started
      */
     public String exec(List<String> cmd) {
-        log.debug("ADB exec: {}", String.join(" ", cmd));
+        log.trace("ADB exec: {}", String.join(" ", cmd));
         try {
             Process process = new ProcessBuilder(cmd).redirectErrorStream(true).start();
             String output = new BufferedReader(new InputStreamReader(process.getInputStream()))
@@ -334,7 +332,7 @@ public class AdbCommands {
                 log.warn("ADB command exited with code {}: {}", exitCode, output);
             } else if (!output.contains("\n")) {
                 // Single line output — safe to log inline
-                log.debug("ADB output: {}", output);
+                log.trace("ADB output: {}", output);
             }
             // Multi-line output (logcat) is logged by the caller with [LOGCAT] label
             return output;

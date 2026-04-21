@@ -104,7 +104,7 @@ public abstract class BaseTest {
 
         AppConfig appConfig = ConfigLoader.getInstance().getAppConfig(appKey);
         SessionContext.set(appKey, appConfig);
-        DriverManager.getInstance().initDriver(appKey);
+        DriverManager.getInstance().initDriver(appKey, appConfig);
         log.info("Setup complete | app {} | auth required: {}", appConfig.getAppName(), appConfig.isRequiresAuth());
     }
 
@@ -146,12 +146,11 @@ public abstract class BaseTest {
 
     private void assertDeviceAndServerReady() {
         log.info("Running pre-flight checks...");
-        String host = ConfigLoader.getInstance().getAppiumHost();
-        int port = ConfigLoader.getInstance().getAppiumPort();
+        ConfigLoader config = ConfigLoader.getInstance();
         // Check Appium server ready for connections
         if (!AppiumServerManager.getInstance().isServerRunning()) {
             throw new AppiumServerException(
-                    "Pre-flight failed: Appium server is not running on " + host + ":" + port + "\n" +
+                    "Pre-flight failed: Appium server is not running on " + config.getAppiumHost() + ":" + config.getAppiumPort() + "\n" +
                             "Fix: set auto_start: true in config.yaml or start Appium manually.");
         }
         log.info("Pre-flight: Appium server — OK");

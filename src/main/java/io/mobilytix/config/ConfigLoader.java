@@ -124,8 +124,8 @@ public class ConfigLoader {
             if (apps == null || !apps.containsKey(appKey)) {
                 throw new ConfigException(appKey, "not found under apps: in config.yaml. " + "Available keys: " + (apps != null ? apps.keySet() : "none"));
             }
-            String json = mapper.writeValueAsString(apps.get(appKey));
-            AppConfig config = mapper.readValue(json, AppConfig.class);
+//            String json = mapper.writeValueAsString(apps.get(appKey));
+            AppConfig config = mapper.convertValue(apps.get(appKey), AppConfig.class);
             log.debug("AppConfig loaded for key '{}' — app: {}", appKey, config.getAppName());
             return config;
         } catch (ConfigException e) {
@@ -377,9 +377,13 @@ public class ConfigLoader {
         String udidOverride = resolveOverride(PROP_DEVICE_UDID, ENV_DEVICE_UDID);
         String platformOverride = resolveOverride(PROP_DEVICE_PLATFORM_VERSION, ENV_DEVICE_PLATFORM_VERSION);
 
-        if (udidOverride != null) {
-            log.info("Device UDID overridden: {} → {} (source: {})", device.getUdid(), udidOverride, getOverrideSource(PROP_DEVICE_UDID, ENV_DEVICE_UDID));
+        if (udidOverride != null && !udidOverride.equals(device.getUdid())) {
+            if (log.isInfoEnabled()) {
+                log.info("Device UDID overridden: {} → {} (source: {})", device.getUdid(), udidOverride, getOverrideSource(PROP_DEVICE_UDID, ENV_DEVICE_UDID));
+            }
             device.setUdid(udidOverride);
+        } else if (udidOverride != null) {
+            log.debug("Device UDID override matches config value — no change: {}", udidOverride);
         }
         if (platformOverride != null) {
             log.info("Device platform version overridden: {} → {} (source: {})", device.getPlatformVersion(), platformOverride,
