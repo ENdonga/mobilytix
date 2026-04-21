@@ -30,28 +30,15 @@ public class ConfigLoader {
     private final Map<String, Object> rawConfig;
     private final ObjectMapper mapper;
 
+    private final FrameworkConfig framework;
+    private final DeviceConfig device;
+    private final ReportingConfig reporting;
+
     // Config key constants - update here if config.yaml keys ever change
     private static final String KEY_FRAMEWORK = "framework";
-    private static final String KEY_APPIUM = "appium";
-    private static final String KEY_AUTO_START = "auto_start";
-    private static final String KEY_HOST = "host";
-    private static final String KEY_PORT = "port";
-    private static final String KEY_LOG_LEVEL = "log_level";
-    private static final String KEY_APK_BASE_PATH = "apk_base_path";
-    private static final String KEY_TIMEOUTS = "timeouts";
-    private static final String KEY_EXPLICIT = "explicit";
-    private static final String KEY_PAGE_LOAD = "page_load";
     private static final String KEY_APPS = "apps";
     private static final String KEY_DEVICE = "device";
     private static final String KEY_REPORTING = "reporting";
-    private static final String KEY_EXTENT = "extent";
-    private static final String KEY_OUTPUT_PATH = "output_path";
-    private static final String KEY_THEME = "theme";
-    private static final String KEY_SCREENSHOTS = "screenshots";
-    private static final String KEY_ON_FAILURE = "on_failure";
-    private static final String KEY_ON_PASS = "on_pass";
-    private static final String KEY_SCREEN_RECORDING = "screen_recording";
-    private static final String KEY_ENABLED = "enabled";
     private static final String KEY_PARALLEL_DEVICES = "parallel_devices";
 
     /**
@@ -83,6 +70,7 @@ public class ConfigLoader {
 
     private ConfigLoader() {
         mapper = new ObjectMapper(new YAMLFactory());
+        // Step 1 — read the config.yml file. Failure here means: file not found or invalid YAML
         try (InputStream is = getClass().getClassLoader().getResourceAsStream("config/config.yml")) {
             if (is == null) {
                 throw new ConfigException("config.yaml not found. Ensure it exists at src/main/resources/config/config.yaml");
@@ -94,6 +82,16 @@ public class ConfigLoader {
         } catch (Exception e) {
             throw new ConfigException("Failed to load config.yaml — " + e.getMessage());
         }
+
+        // Step 2 - map raw config to typed models. Failure here means: config.yaml structure does not match the model class
+        try {
+            device = mapper.convertValue(rawConfig.get(KEY_DEVICE), DeviceConfig.class);
+            framework = mapper.convertValue(rawConfig.get(KEY_FRAMEWORK), FrameworkConfig.class);
+            reporting = mapper.convertValue(rawConfig.get(KEY_REPORTING), ReportingConfig.class);
+        } catch (Exception e) {
+            throw new ConfigException("Failed to map config.yaml to model — " + e.getMessage());
+        }
+        resolveAllOverrides();
     }
 
     /**
@@ -145,116 +143,62 @@ public class ConfigLoader {
      */
     @SuppressWarnings("unchecked")
     public DeviceConfig getDeviceConfig() {
-        try {
-            String json = mapper.writeValueAsString(rawConfig.get(KEY_DEVICE));
-            DeviceConfig config = mapper.readValue(json, DeviceConfig.class);
-            // UDID override
-            String udidOverride = resolveOverride(PROP_DEVICE_UDID, ENV_DEVICE_UDID);
-            if (udidOverride != null) {
-                if (log.isInfoEnabled()) {
-                    log.info("Device UDID overridden: {} → {} (source: {})", config.getUdid(), udidOverride, getOverrideSource(PROP_DEVICE_UDID, ENV_DEVICE_UDID));
-                }
-                config.setUdid(udidOverride);
-            }
-            // Platform version override
-            String platformOverride = resolveOverride(PROP_DEVICE_PLATFORM_VERSION, ENV_DEVICE_PLATFORM_VERSION);
-            if (platformOverride != null) {
-                if (log.isInfoEnabled()) {
-                    log.info("Device platform version overridden: {} → {} (source: {})", config.getPlatformVersion(), platformOverride,
-                            getOverrideSource(PROP_DEVICE_PLATFORM_VERSION, ENV_DEVICE_PLATFORM_VERSION));
-                }
-                config.setPlatformVersion(platformOverride);
-            }
-            return config;
-        } catch (Exception e) {
-            throw new ConfigException("Failed to load DeviceConfig");
-        }
+        return device;
     }
 
     // Appium config
     public String getAppiumHost() {
-        String override = resolveOverride(PROP_APPIUM_HOST, ENV_APPIUM_HOST);
-        if (override != null) {
-            if (log.isDebugEnabled()) {
-                log.debug("Appium host overridden to: {} (source: {})", override, getOverrideSource(PROP_APPIUM_HOST, ENV_APPIUM_HOST));
-            }
-            return override;
-        }
-        return getNestedValue(KEY_FRAMEWORK, KEY_APPIUM, KEY_HOST);
+        return framework.getAppium().getHost();
     }
 
     public int getAppiumPort() {
-        String override = resolveOverride(PROP_APPIUM_PORT, ENV_APPIUM_PORT);
-        if (override != null) {
-            if (log.isDebugEnabled()) {
-                log.debug("Appium port overridden to: {} (source: {})", override, getOverrideSource(PROP_APPIUM_PORT, ENV_APPIUM_PORT));
-            }
-            return Integer.parseInt(override);
-        }
-        return Integer.parseInt(getNestedValue(KEY_FRAMEWORK, KEY_APPIUM, KEY_PORT));
+        return framework.getAppium().getPort();
     }
 
     public boolean isAppiumAutoStart() {
-        String override = resolveOverride(PROP_APPIUM_AUTO_START, ENV_APPIUM_AUTO_START);
-        if (override != null) {
-            if (log.isDebugEnabled()) {
-                log.debug("Appium auto_start overridden to: {} (source: {})", override, getOverrideSource(PROP_APPIUM_AUTO_START, ENV_APPIUM_AUTO_START));
-            }
-            return Boolean.parseBoolean(override);
-        }
-        return Boolean.parseBoolean(getNestedValue(KEY_FRAMEWORK, KEY_APPIUM, KEY_AUTO_START));
+        return framework.getAppium().isAutoStart();
     }
 
     public String getAppiumLogLevel() {
-        return getNestedValue(KEY_FRAMEWORK, KEY_APPIUM, KEY_LOG_LEVEL).toLowerCase();
+        return framework.getAppium().getLogLevel().toLowerCase();
     }
 
     // Framework config
     public String getApkBasePath() {
-        return getNestedValue(KEY_FRAMEWORK, KEY_APK_BASE_PATH);
+        return framework.getApkBasePath();
     }
 
     public int getExplicitTimeout() {
-        return Integer.parseInt(getNestedValue(KEY_FRAMEWORK, KEY_TIMEOUTS, KEY_EXPLICIT));
+        return framework.getTimeouts().getExplicit();
     }
 
     public int getPageLoadTimeout() {
-        return Integer.parseInt(getNestedValue(KEY_FRAMEWORK, KEY_TIMEOUTS, KEY_PAGE_LOAD));
+        return framework.getTimeouts().getPageLoad();
     }
 
     // Reporting config
     public String getExtentOutputPath() {
-        String override = resolveOverride(PROP_EXTENT_OUTPUT_PATH, ENV_EXTENT_OUTPUT_PATH);
-        if (override != null) {
-            log.debug("Extent output path overridden to: {}", override);
-            return override;
-        }
-        return getNestedValue(KEY_REPORTING, KEY_EXTENT, KEY_OUTPUT_PATH);
+        return reporting.getExtent().getOutputPath();
     }
 
     public String getExtentTheme() {
-        return getNestedValue(KEY_REPORTING, KEY_EXTENT, KEY_THEME).toUpperCase();
+        return reporting.getExtent().getTheme();
     }
 
     public boolean isScreenshotOnFailure() {
-        return Boolean.parseBoolean(getNestedValue(KEY_REPORTING, KEY_SCREENSHOTS, KEY_ON_FAILURE));
+        return reporting.getScreenshots().isOnFailure();
     }
 
     public boolean isScreenshotOnPass() {
-        return Boolean.parseBoolean(getNestedValue(KEY_REPORTING, KEY_SCREENSHOTS, KEY_ON_PASS));
+        return reporting.getScreenshots().isOnPass();
     }
 
     public boolean isScreenRecordingEnabled() {
-        String override = resolveOverride(PROP_SCREEN_RECORDING_ENABLED, ENV_SCREEN_RECORDING_ENABLED);
-        if (override != null) {
-            log.debug("Screen recording enabled overridden to: {}", override);
-            return Boolean.parseBoolean(override);
-        }
-        return Boolean.parseBoolean(getNestedValue(KEY_REPORTING, KEY_SCREEN_RECORDING, KEY_ENABLED));
+        return reporting.getScreenRecording().isEnabled();
     }
 
     public String getScreenRecordingOutputPath() {
-        return getNestedValue(KEY_REPORTING, KEY_SCREEN_RECORDING, KEY_OUTPUT_PATH);
+        return reporting.getScreenRecording().getOutputPath();
     }
 
     /**
@@ -347,23 +291,20 @@ public class ConfigLoader {
      * @return the resolved credential value or defaultValue
      */
     public String getCredential(String envKey, String defaultValue) {
+        // Check command line -Denvkey=value
         String fromProp = System.getProperty(envKey);
-        if (fromProp != null && !fromProp.isBlank()) {
-            return fromProp.trim();
-        }
-        String fromEnvProperty = System.getProperty(envKey);
-        if (fromEnvProperty != null && !fromEnvProperty.isBlank()) {
-            return fromEnvProperty.trim();
-        }
+        if (fromProp != null && !fromProp.isBlank()) return fromProp.trim();
+
+        // Check OS environment variable
         String fromEnv = System.getenv(envKey);
-        if (fromEnv != null && !fromEnv.isBlank()) {
-            return fromEnv;
-        }
+        if (fromEnv != null && !fromEnv.isBlank()) return fromEnv.trim();
+
         if (defaultValue != null) {
-            log.debug("Credential '{}' not set in environment - using default", envKey);
+            log.debug("Credential '{}' not set — using default", envKey);
             return defaultValue;
         }
-        log.warn("Credential '{}' not set. Set it in .env or as a CI environment variable.", envKey);
+
+        log.warn("Credential '{}' not configured. Set it in .env or CI environment.", envKey);
         return null;
     }
 
@@ -408,5 +349,57 @@ public class ConfigLoader {
             return "OS environment variable";
         }
         return "config.yaml";
+    }
+
+    private void resolveAllOverrides() {
+        // ---- Appium ----
+        String hostOverride = resolveOverride(PROP_APPIUM_HOST, ENV_APPIUM_HOST);
+        String portOverride = resolveOverride(PROP_APPIUM_PORT, ENV_APPIUM_PORT);
+        String autoStartOverride = resolveOverride(PROP_APPIUM_AUTO_START, ENV_APPIUM_AUTO_START);
+
+        if (hostOverride != null) {
+            log.info("Appium host overridden: {} → {} (source: {})", framework.getAppium().getHost(),
+                    hostOverride, getOverrideSource(PROP_APPIUM_HOST, ENV_APPIUM_HOST));
+            framework.getAppium().setHost(hostOverride);
+        }
+        if (portOverride != null) {
+            log.info("Appium port overridden: {} → {} (source: {})", framework.getAppium().getPort(), portOverride,
+                    getOverrideSource(PROP_APPIUM_PORT, ENV_APPIUM_PORT));
+            framework.getAppium().setPort(Integer.parseInt(portOverride));
+        }
+        if (autoStartOverride != null) {
+            log.info("Appium auto_start overridden: {} → {} (source: {})", framework.getAppium().isAutoStart(),
+                    autoStartOverride, getOverrideSource(PROP_APPIUM_AUTO_START, ENV_APPIUM_AUTO_START));
+            framework.getAppium().setAutoStart(Boolean.parseBoolean(autoStartOverride));
+        }
+
+        // ---- Device ----
+        String udidOverride = resolveOverride(PROP_DEVICE_UDID, ENV_DEVICE_UDID);
+        String platformOverride = resolveOverride(PROP_DEVICE_PLATFORM_VERSION, ENV_DEVICE_PLATFORM_VERSION);
+
+        if (udidOverride != null) {
+            log.info("Device UDID overridden: {} → {} (source: {})", device.getUdid(), udidOverride, getOverrideSource(PROP_DEVICE_UDID, ENV_DEVICE_UDID));
+            device.setUdid(udidOverride);
+        }
+        if (platformOverride != null) {
+            log.info("Device platform version overridden: {} → {} (source: {})", device.getPlatformVersion(), platformOverride,
+                    getOverrideSource(PROP_DEVICE_PLATFORM_VERSION, ENV_DEVICE_PLATFORM_VERSION));
+            device.setPlatformVersion(platformOverride);
+        }
+
+        // ---- Reporting ----
+        String extentPathOverride = resolveOverride(PROP_EXTENT_OUTPUT_PATH, ENV_EXTENT_OUTPUT_PATH);
+        String screenRecordOverride = resolveOverride(PROP_SCREEN_RECORDING_ENABLED, ENV_SCREEN_RECORDING_ENABLED);
+
+        if (extentPathOverride != null) {
+            log.info("Extent output path overridden to: {} (source: {})", extentPathOverride,
+                    getOverrideSource(PROP_EXTENT_OUTPUT_PATH, ENV_EXTENT_OUTPUT_PATH));
+            reporting.getExtent().setOutputPath(extentPathOverride);
+        }
+        if (screenRecordOverride != null) {
+            log.info("Screen recording enabled overridden to: {} (source: {})", screenRecordOverride,
+                    getOverrideSource(PROP_SCREEN_RECORDING_ENABLED, ENV_SCREEN_RECORDING_ENABLED));
+            reporting.getScreenRecording().setEnabled(Boolean.parseBoolean(screenRecordOverride));
+        }
     }
 }
