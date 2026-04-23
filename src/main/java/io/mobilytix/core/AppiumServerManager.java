@@ -57,6 +57,11 @@ public class AppiumServerManager {
      * Safe to call multiple times - subsequent calls are no-ops.
      */
     public void startIfRequired() {
+        // Sauce Labs manages its own server — nothing to start locally
+        if (ConfigLoader.getInstance().isRunningOnSauceLabs()) {
+            log.info("Sauce Labs mode - skipping local Appium server start");
+            return;
+        }
         if (!config.isAppiumAutoStart()) {
             if (isServerRunning()) {
                 log.info("auto_start=false — using manually started Appium server on {}:{}", config.getAppiumHost(), config.getAppiumPort());
@@ -84,6 +89,11 @@ public class AppiumServerManager {
      * If auto_start=false this is a no-op.
      */
     public void stop() {
+        // Sauce Labs manages its own server — nothing to stop locally
+        if (ConfigLoader.getInstance().isRunningOnSauceLabs()) {
+            log.info("Sauce Labs mode - skipping local Appium server stop");
+            return;
+        }
         if (service != null && service.isRunning()) {
             service.stop();
             log.info("Appium Server stopped successfully");
@@ -127,6 +137,9 @@ public class AppiumServerManager {
      * Returns false for any connection failure or non-200 response.
      */
     public boolean isServerRunning() {
+        if (ConfigLoader.getInstance().isRunningOnSauceLabs()) {
+            return true;
+        }
         String statusUrl = "http://" + config.getAppiumHost() + ":" + config.getAppiumPort() + STATUS_ENDPOINT;
         try {
             HttpURLConnection connection = (HttpURLConnection) new URL(statusUrl).openConnection();

@@ -13,4 +13,8 @@ public class FrameworkConfig {
     private AppiumConfig appium;
     @JsonProperty("timeouts")
     private TimeoutsConfig timeouts;
+    @JsonProperty("execution_mode")
+    private String executionMode = "local";
+    @JsonProperty("sauce_labs")
+    private SauceLabsConfig sauceLabs;
 }

@@ -1,6 +1,14 @@
 framework:
   name: Mobilytix
 
+  execution_mode: "local" # local | sauce_labs — override with EXECUTION_MODE env
+  sauce_labs:
+    region: "eu-central-1"
+    build: "mobilytix"
+    device_name: "Android GoogleAPI Emulator"
+    platform_version: "12"
+    app_storage_filename: "MyDemoAppAndroid.apk"
+
   appium:
     # Set auto_start to true when running in CI or if you want the framework to start and stop the Appium server automatically.
     # Set to false if you prefer to start Appium manually before running tests.

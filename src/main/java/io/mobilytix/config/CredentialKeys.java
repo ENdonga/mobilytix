@@ -23,6 +23,11 @@ public class CredentialKeys {
     public static final String SAUCE_PASSWORD = "SAUCE_PASSWORD";
     public static final String SAUCE_LOCKED_USERNAME = "SAUCE_LOCKED_USERNAME";
 
+    // Sauce Labs cloud credentials — for CI execution on Sauce Labs RDC
+    // Different from SAUCE_USERNAME/PASSWORD which are app test credentials
+    public static final String SAUCE_LABS_USERNAME = "SAUCE_LABS_USERNAME";
+    public static final String SAUCE_LABS_ACCESS_KEY = "SAUCE_LABS_ACCESS_KEY";
+
     /**
      * API token for email-based OTP resolution e.g. MailSlurp, Mailinator
      */

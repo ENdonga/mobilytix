@@ -53,11 +53,17 @@ public abstract class BaseTest {
     @BeforeSuite(alwaysRun = true)
     public void globalSetup() {
         EnvLoader.load();
+        ConfigLoader.getInstance().applyOverrides();
 
         log.info("========================================");
         log.info("  Mobilytix Suite Starting");
         log.info("========================================");
         try {
+            if (ConfigLoader.getInstance().isRunningOnSauceLabs()) {
+                log.info("Sauce Labs mode — skipping all local pre-flight checks");
+                return;
+            }
+            // Local execution mode only
             AppiumServerManager.getInstance().startIfRequired();
             assertDeviceAndServerReady();
         } catch (Exception e) {

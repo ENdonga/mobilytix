@@ -58,6 +58,8 @@ public class ConfigLoader {
     private static final String ENV_APPIUM_PORT = "APPIUM_PORT";
     private static final String PROP_APPIUM_AUTO_START = "appium.auto_start";
     private static final String ENV_APPIUM_AUTO_START = "APPIUM_AUTO_START";
+    private static final String PROP_EXECUTION_MODE_OVERRIDE = "execution_mode";
+    private static final String ENV_EXECUTION_MODE_OVERRIDE = "EXECUTION_MODE";
     // Reporting
     private static final String PROP_EXTENT_OUTPUT_PATH = "extent.output_path";
     private static final String ENV_EXTENT_OUTPUT_PATH = "EXTENT_OUTPUT_PATH";
@@ -105,6 +107,15 @@ public class ConfigLoader {
         return instance;
     }
 
+    /**
+     * Re-applies all overrides from system properties and environment variables.
+     * Call this after EnvLoader.load() to pick up .env file values that were
+     * not available when ConfigLoader was first instantiated.
+     */
+    public void applyOverrides() {
+        resolveAllOverrides();
+    }
+
     // App config
 
     /**
@@ -136,6 +147,17 @@ public class ConfigLoader {
     }
 
     // Device config
+    public String getExecutionMode() {
+        return framework.getExecutionMode();
+    }
+
+    public SauceLabsConfig getSauceLabsConfig() {
+        return framework.getSauceLabs();
+    }
+
+    public boolean isRunningOnSauceLabs() {
+        return "sauce_labs".equals(framework.getExecutionMode());
+    }
 
     /**
      * Returns the DeviceConfig from the device: block in config.yaml.
@@ -352,22 +374,29 @@ public class ConfigLoader {
     }
 
     private void resolveAllOverrides() {
+        // Execution mode - local/Sauce Labs
+        String executionModeOverride = resolveOverride(PROP_EXECUTION_MODE_OVERRIDE, ENV_EXECUTION_MODE_OVERRIDE);
+        if (executionModeOverride != null && !executionModeOverride.equals(framework.getExecutionMode())) {
+            log.info("Execution mode overridden to: {}", executionModeOverride);
+            framework.setExecutionMode(executionModeOverride);
+        }
         // ---- Appium ----
         String hostOverride = resolveOverride(PROP_APPIUM_HOST, ENV_APPIUM_HOST);
-        String portOverride = resolveOverride(PROP_APPIUM_PORT, ENV_APPIUM_PORT);
-        String autoStartOverride = resolveOverride(PROP_APPIUM_AUTO_START, ENV_APPIUM_AUTO_START);
-
-        if (hostOverride != null) {
+        if (hostOverride != null && !hostOverride.equals(framework.getAppium().getHost())) {
             log.info("Appium host overridden: {} → {} (source: {})", framework.getAppium().getHost(),
                     hostOverride, getOverrideSource(PROP_APPIUM_HOST, ENV_APPIUM_HOST));
             framework.getAppium().setHost(hostOverride);
         }
-        if (portOverride != null) {
+
+        String portOverride = resolveOverride(PROP_APPIUM_PORT, ENV_APPIUM_PORT);
+        if (portOverride != null && Integer.parseInt(portOverride) != framework.getAppium().getPort()) {
             log.info("Appium port overridden: {} → {} (source: {})", framework.getAppium().getPort(), portOverride,
                     getOverrideSource(PROP_APPIUM_PORT, ENV_APPIUM_PORT));
             framework.getAppium().setPort(Integer.parseInt(portOverride));
         }
-        if (autoStartOverride != null) {
+
+        String autoStartOverride = resolveOverride(PROP_APPIUM_AUTO_START, ENV_APPIUM_AUTO_START);
+        if (autoStartOverride != null && Boolean.parseBoolean(autoStartOverride) != framework.getAppium().isAutoStart()) {
             log.info("Appium auto_start overridden: {} → {} (source: {})", framework.getAppium().isAutoStart(),
                     autoStartOverride, getOverrideSource(PROP_APPIUM_AUTO_START, ENV_APPIUM_AUTO_START));
             framework.getAppium().setAutoStart(Boolean.parseBoolean(autoStartOverride));
@@ -375,8 +404,6 @@ public class ConfigLoader {
 
         // ---- Device ----
         String udidOverride = resolveOverride(PROP_DEVICE_UDID, ENV_DEVICE_UDID);
-        String platformOverride = resolveOverride(PROP_DEVICE_PLATFORM_VERSION, ENV_DEVICE_PLATFORM_VERSION);
-
         if (udidOverride != null && !udidOverride.equals(device.getUdid())) {
             if (log.isInfoEnabled()) {
                 log.info("Device UDID overridden: {} → {} (source: {})", device.getUdid(), udidOverride, getOverrideSource(PROP_DEVICE_UDID, ENV_DEVICE_UDID));
@@ -385,7 +412,9 @@ public class ConfigLoader {
         } else if (udidOverride != null) {
             log.debug("Device UDID override matches config value — no change: {}", udidOverride);
         }
-        if (platformOverride != null) {
+
+        String platformOverride = resolveOverride(PROP_DEVICE_PLATFORM_VERSION, ENV_DEVICE_PLATFORM_VERSION);
+        if (platformOverride != null && !platformOverride.equals(device.getPlatformVersion())) {
             log.info("Device platform version overridden: {} → {} (source: {})", device.getPlatformVersion(), platformOverride,
                     getOverrideSource(PROP_DEVICE_PLATFORM_VERSION, ENV_DEVICE_PLATFORM_VERSION));
             device.setPlatformVersion(platformOverride);
@@ -393,14 +422,14 @@ public class ConfigLoader {
 
         // ---- Reporting ----
         String extentPathOverride = resolveOverride(PROP_EXTENT_OUTPUT_PATH, ENV_EXTENT_OUTPUT_PATH);
-        String screenRecordOverride = resolveOverride(PROP_SCREEN_RECORDING_ENABLED, ENV_SCREEN_RECORDING_ENABLED);
-
-        if (extentPathOverride != null) {
+        if (extentPathOverride != null && !extentPathOverride.equals(reporting.getExtent().getOutputPath())) {
             log.info("Extent output path overridden to: {} (source: {})", extentPathOverride,
                     getOverrideSource(PROP_EXTENT_OUTPUT_PATH, ENV_EXTENT_OUTPUT_PATH));
             reporting.getExtent().setOutputPath(extentPathOverride);
         }
-        if (screenRecordOverride != null) {
+
+        String screenRecordOverride = resolveOverride(PROP_SCREEN_RECORDING_ENABLED, ENV_SCREEN_RECORDING_ENABLED);
+        if (screenRecordOverride != null && Boolean.parseBoolean(screenRecordOverride) != reporting.getScreenRecording().isEnabled()) {
             log.info("Screen recording enabled overridden to: {} (source: {})", screenRecordOverride,
                     getOverrideSource(PROP_SCREEN_RECORDING_ENABLED, ENV_SCREEN_RECORDING_ENABLED));
             reporting.getScreenRecording().setEnabled(Boolean.parseBoolean(screenRecordOverride));

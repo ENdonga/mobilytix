@@ -7,7 +7,6 @@ import org.testng.annotations.Test;
 
 public class ConfigLoaderExceptionTest {
     private final ConfigLoader config = ConfigLoader.getInstance();
-
     @Test(description = "Throws ConfigException when a valid top-level key is missing")
     public void testMissingTopLevelKeyThrowsConfigException() {
         ConfigException ex = Assert.expectThrows(ConfigException.class, () -> config.getNestedValue("non_existing_key"));

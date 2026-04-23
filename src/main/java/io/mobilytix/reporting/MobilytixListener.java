@@ -69,6 +69,10 @@ public class MobilytixListener implements ITestListener {
             AllureAttachments.attachScreenshot(SCREENSHOT_LABEL);
         }
 
+        if (ConfigLoader.getInstance().isRunningOnSauceLabs()) {
+            DriverManager.getInstance().getDriver().executeScript("sauce:job-result=passed");
+        }
+
         stopRecordingAndAttach();
         ExtentManager.removeTest();
     }
@@ -88,6 +92,9 @@ public class MobilytixListener implements ITestListener {
         // Mark test as failed in Extent
         if (ExtentManager.getTest() != null && cause != null) {
             ExtentManager.getTest().fail(cause);
+        }
+        if (ConfigLoader.getInstance().isRunningOnSauceLabs()) {
+            DriverManager.getInstance().getDriver().executeScript("sauce:job-result=failed");
         }
         stopRecordingAndAttach();
         ExtentManager.removeTest();
