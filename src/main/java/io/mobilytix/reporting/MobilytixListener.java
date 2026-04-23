@@ -6,6 +6,7 @@ import io.mobilytix.adb.ScreenRecorder;
 import io.mobilytix.config.ConfigLoader;
 import io.mobilytix.core.DriverManager;
 import io.mobilytix.core.SessionContext;
+import io.mobilytix.core.SuiteContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.testng.ITestContext;
@@ -43,6 +44,11 @@ public class MobilytixListener implements ITestListener {
 
     @Override
     public void onTestStart(ITestResult result) {
+        if (SuiteContext.isAborted()) {
+            log.warn("Suite aborted — skipping listener actions for: {}",
+                    result.getName());
+            return;
+        }
         String testName = getTestName(result);
         String appKey = safeGetAppKey();
 
@@ -57,6 +63,9 @@ public class MobilytixListener implements ITestListener {
 
     @Override
     public void onTestSuccess(ITestResult result) {
+        if (SuiteContext.isAborted()) {
+            return;
+        }
         String testName = getTestName(result);
         log.info(LOG_PREFIX_PASS, testName);
 
@@ -79,6 +88,9 @@ public class MobilytixListener implements ITestListener {
 
     @Override
     public void onTestFailure(ITestResult result) {
+        if (SuiteContext.isAborted()) {
+            return;
+        }
         String testName = getTestName(result);
         Throwable cause = result.getThrowable();
         log.error(LOG_PREFIX_FAIL, testName, cause != null ? cause.getMessage() : "unknown");
@@ -102,6 +114,9 @@ public class MobilytixListener implements ITestListener {
 
     @Override
     public void onTestSkipped(ITestResult result) {
+        if (SuiteContext.isAborted()) {
+            return;
+        }
         String testName = getTestName(result);
         log.warn(LOG_PREFIX_SKIP, testName);
 

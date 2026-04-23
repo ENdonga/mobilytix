@@ -7,6 +7,7 @@ import io.mobilytix.config.ConfigLoader;
 import io.mobilytix.core.AppiumServerManager;
 import io.mobilytix.core.DriverManager;
 import io.mobilytix.core.SessionContext;
+import io.mobilytix.core.SuiteContext;
 import io.mobilytix.exceptions.AppiumServerException;
 import io.mobilytix.reporting.MobilytixListener;
 import io.mobilytix.utils.EnvLoader;
@@ -42,8 +43,6 @@ import org.testng.annotations.*;
 public abstract class BaseTest {
     protected final Logger log = LogManager.getLogger(this.getClass());
     private static final String ERROR_MISSING_ANNOTATION = "%s must be annotated with @AppUnderTest. Example: @AppUnderTest(\"app_a\")";
-    private static volatile boolean suiteAborted = false;
-    private static volatile String suiteAbortReason = null;
 
     /**
      * Starts the Appium server before any test class initialises.
@@ -67,9 +66,8 @@ public abstract class BaseTest {
             AppiumServerManager.getInstance().startIfRequired();
             assertDeviceAndServerReady();
         } catch (Exception e) {
-            suiteAborted = true;
-            suiteAbortReason = e.getMessage();
-            log.error("Suite aborted during pre-flight: {}", e.getMessage());
+            SuiteContext.abort(e.getMessage());
+            log.error("Suite aborted during pre-flight");
             throw e;
         }
     }
@@ -98,8 +96,8 @@ public abstract class BaseTest {
      */
     @BeforeClass(alwaysRun = true)
     public void setUp() {
-        if (suiteAborted) {
-            throw new SkipException("Suite aborted during pre-flight checks. Reason: " + suiteAbortReason);
+        if (SuiteContext.isAborted()) {
+            throw new SkipException("Suite aborted during pre-flight checks. Reason: " + SuiteContext.isAborted());
         }
         AppUnderTest annotation = getClass().getAnnotation(AppUnderTest.class);
         if (annotation == null) {
@@ -120,6 +118,10 @@ public abstract class BaseTest {
      */
     @AfterClass(alwaysRun = true)
     public void tearDown() {
+        if (SuiteContext.isAborted()) {
+            log.debug("Suite aborted — skipping teardown for: {}", getClass().getSimpleName());
+            return;
+        }
         log.info("Tearing down | class {}", getClass().getSimpleName());
         DriverManager.getInstance().quitDriver();
         SessionContext.clear();

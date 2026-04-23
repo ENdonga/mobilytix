@@ -97,7 +97,7 @@ public class AppiumServerManager {
         if (service != null && service.isRunning()) {
             service.stop();
             log.info("Appium Server stopped successfully");
-        } else {
+        } else if(!SuiteContext.isAborted()) {
             log.warn("Could not stop Appium server — it may have been started externally. Stop it manually if needed.");
         }
     }
