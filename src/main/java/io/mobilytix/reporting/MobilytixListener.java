@@ -41,12 +41,15 @@ public class MobilytixListener implements ITestListener {
     private static final String LOG_PREFIX_PASS = "✅ TEST PASS   : {}";
     private static final String LOG_PREFIX_FAIL = "❌ TEST FAIL   : {} — {}";
     private static final String LOG_PREFIX_SKIP = "⏭  TEST SKIP   : {}";
+    private static boolean abortLoggedOnce = false;
 
     @Override
     public void onTestStart(ITestResult result) {
         if (SuiteContext.isAborted()) {
-            log.warn("Suite aborted — skipping listener actions for: {}",
-                    result.getName());
+            if (!abortLoggedOnce) {
+                log.warn("Suite aborted all tests will be skipped. Reason: {}", SuiteContext.getAbortReason());
+                abortLoggedOnce = true;
+            }
             return;
         }
         String testName = getTestName(result);

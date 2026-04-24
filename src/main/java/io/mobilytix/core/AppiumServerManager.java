@@ -63,16 +63,11 @@ public class AppiumServerManager {
             return;
         }
         if (!config.isAppiumAutoStart()) {
-            if (isServerRunning()) {
-                log.info("auto_start=false — using manually started Appium server on {}:{}", config.getAppiumHost(), config.getAppiumPort());
-            } else {
-                log.warn("auto_start=false — no Appium server detected on {}:{}. Start it manually with: appium --address {} --port {}",
-                        config.getAppiumHost(), config.getAppiumPort(), config.getAppiumHost(), config.getAppiumPort());
-            }
+            log.warn("auto_start=false -> Appium server management is manual");
             return;
         }
         if (isServerRunning()) {
-            log.info("Appium server is already running on port - skipping start {}", config.getAppiumPort());
+            log.info("Appium server is already running on port: {} - skipping start", config.getAppiumPort());
             return;
         }
         log.info("Starting Appium server on {}:{} — override source: {}", config.getAppiumHost(), config.getAppiumPort(),
@@ -97,7 +92,7 @@ public class AppiumServerManager {
         if (service != null && service.isRunning()) {
             service.stop();
             log.info("Appium Server stopped successfully");
-        } else if(!SuiteContext.isAborted()) {
+        } else if (!SuiteContext.isAborted()) {
             log.warn("Could not stop Appium server — it may have been started externally. Stop it manually if needed.");
         }
     }
