@@ -93,7 +93,6 @@ public class ConfigLoader {
         } catch (Exception e) {
             throw new ConfigException("Failed to map config.yaml to model — " + e.getMessage());
         }
-        resolveAllOverrides();
     }
 
     /**
