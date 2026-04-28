@@ -42,6 +42,7 @@ jobs:
           node-version: '20'
 
       - name: Cache Appium drivers
+        id: cache-appium
         uses: actions/cache@v4
         with:
           path: ~/.appium
@@ -51,7 +52,12 @@ jobs:
         run: |
           npm install -g appium@latest
           npm install -g @appium/doctor
-          appium driver install uiautomator2
+          if [ "${{ steps.cache-appium.outputs.cache-hit }}" != "true" ]; then
+            echo "Cache miss — installing uiautomator2 driver"
+            appium driver install uiautomator2
+          else
+            echo "Cache hit — uiautomator2 already installed, skipping"
+          fi
 
       - name: Verify Appium installation
         run: |
@@ -80,6 +86,8 @@ jobs:
           APPIUM_AUTO_START: "true"
           DEVICE_UDID: "emulator-5554"
           APPIUM_LOG_LEVEL: "warn"
+          PAGE_LOAD_TIMEOUT: "45"
+          EXPLICIT_TIMEOUT: "30"
           SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME }}
           SAUCE_PASSWORD: ${{ secrets.SAUCE_PASSWORD }}
           SAUCE_LOCKED_USERNAME: ${{ secrets.SAUCE_LOCKED_USERNAME }}
