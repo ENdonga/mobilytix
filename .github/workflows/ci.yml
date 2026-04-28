@@ -55,6 +55,7 @@ jobs:
           APK_URL=$(curl -s https://api.github.com/repos/saucelabs/my-demo-app-android/releases/latest \
             | grep "browser_download_url" \
             | grep "\.apk" \
+            | grep -v "androidTest" \
             | cut -d '"' -f 4)
           echo "Downloading from: $APK_URL"
           curl -L "$APK_URL" -o apks/sauce_demo/MyDemoAppAndroid.apk
