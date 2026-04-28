@@ -39,6 +39,7 @@ public class LoginTest extends BaseTest {
     @Story("Valid login")
     @Severity(SeverityLevel.BLOCKER)
     public void testValidLogin() {
+        catalogPage.waitForLoad();
         AllureAttachments.step("Navigate to login with app reset");
         catalogPage.resetAndNavigateToLogin();
         AllureAttachments.step("Enter valid credentials");
@@ -52,6 +53,7 @@ public class LoginTest extends BaseTest {
     @Story("Valid login")
     @Severity(SeverityLevel.NORMAL)
     public void testValidUserShortcut() {
+        catalogPage.waitForLoad();
         AllureAttachments.step("Navigate to login with app reset");
         catalogPage.navigateToLogin();
         AllureAttachments.step("Tap valid user shortcut");
@@ -69,6 +71,7 @@ public class LoginTest extends BaseTest {
     @Story("Field validation")
     @Severity(SeverityLevel.NORMAL)
     public void testEmptyUsernameShowsError() {
+        catalogPage.waitForLoad();
         AllureAttachments.step("Navigate to login without reset");
         catalogPage.navigateToLogin();
         AllureAttachments.step("Leave username empty and enter password only");
@@ -85,6 +88,7 @@ public class LoginTest extends BaseTest {
     @Story("Field validation")
     @Severity(SeverityLevel.NORMAL)
     public void testEmptyPasswordShowsError() {
+        catalogPage.waitForLoad();
         AllureAttachments.step("Navigate to login without reset");
         catalogPage.navigateToLogin();
         AllureAttachments.step("Enter username and leave password empty");
@@ -101,6 +105,7 @@ public class LoginTest extends BaseTest {
     @Story("Locked user")
     @Severity(SeverityLevel.CRITICAL)
     public void testLockedUserIsBlocked() {
+        catalogPage.waitForLoad();
         AllureAttachments.step("Navigate to login without reset");
         catalogPage.navigateToLogin();
         AllureAttachments.step("Tap locked user shortcut");
@@ -124,6 +129,7 @@ public class LoginTest extends BaseTest {
     @Story("Logout")
     @Severity(SeverityLevel.CRITICAL)
     public void testLogoutFlow() {
+        catalogPage.waitForLoad();
         AllureAttachments.step("Navigate to login with reset and log in");
         catalogPage.resetAndNavigateToLogin();
         loginPage.login(validUsername, validPassword);
