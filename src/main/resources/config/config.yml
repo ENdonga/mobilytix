@@ -2,6 +2,7 @@ framework:
   name: Mobilytix
 
   execution_mode: "local" # local | sauce_labs — override with EXECUTION_MODE env
+
   sauce_labs:
     region: "eu-central-1"
     build: "mobilytix"

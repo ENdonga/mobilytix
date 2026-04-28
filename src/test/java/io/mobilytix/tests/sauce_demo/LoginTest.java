@@ -29,7 +29,7 @@ public class LoginTest extends BaseTest {
         loginPage = LoginPage.getInstance();
         catalogPage = CatalogPage.getInstance();
         ConfigLoader config = ConfigLoader.getInstance();
-        validUsername = config.getCredential(CredentialKeys.SAUCE_VALID_USERNAME, "bod@example.com").trim();
+        validUsername = config.getCredential(CredentialKeys.SAUCE_USERNAME, "bod@example.com").trim();
         validPassword = config.getCredential(CredentialKeys.SAUCE_PASSWORD, "10203040").trim();
         lockedUsername = config.getCredential(CredentialKeys.SAUCE_LOCKED_USERNAME, "alice@example.com").trim();
         log.info("Login tests will use username: {}", validUsername);

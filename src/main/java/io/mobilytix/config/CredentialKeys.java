@@ -19,7 +19,7 @@ public class CredentialKeys {
     private CredentialKeys() {
     }
 
-    public static final String SAUCE_VALID_USERNAME = "SAUCE_VALID_USERNAME";
+    public static final String SAUCE_USERNAME = "SAUCE_USERNAME";
     public static final String SAUCE_PASSWORD = "SAUCE_PASSWORD";
     public static final String SAUCE_LOCKED_USERNAME = "SAUCE_LOCKED_USERNAME";
 
