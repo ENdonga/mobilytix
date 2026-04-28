@@ -42,6 +42,7 @@ jobs:
           node-version: '20'
 
       - name: Cache Appium drivers
+        id: cache-appium
         uses: actions/cache@v4
         with:
           path: ~/.appium
@@ -51,10 +52,11 @@ jobs:
         run: |
           npm install -g appium@latest
           npm install -g @appium/doctor
-          if appium driver list --installed | grep -q "uiautomator2"; then
-            echo "uiautomator2 already installed — skipping"
-          else
+          if [ "${{ steps.cache-appium.outputs.cache-hit }}" != "true" ]; then
+            echo "Cache miss — installing uiautomator2 driver"
             appium driver install uiautomator2
+          else
+            echo "Cache hit — uiautomator2 already installed, skipping"
           fi
 
       - name: Verify Appium installation
