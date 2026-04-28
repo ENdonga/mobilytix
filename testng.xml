@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<suite name="Mobilytix Suite" verbose="1">
+    <!--
+        Sequential run — one test class at a time.
+        Use for local development and debugging.
+        Run with: ./mvnw clean test
+    -->
+
+    <test name="App A Tests">
+        <classes>
+            <!--
+                Add your App A test classes here as you create them.
+                Example:
+                <class name="io.mobilytix.tests.app_a.LoginTest"/>
+                <class name="io.mobilytix.tests.app_a.HomeTest"/>
+            -->
+            <class name="io.mobilytix.tests.sauce_demo.LoginTest" />
+            <class name="io.mobilytix.tests.sauce_demo.CatalogTest" />
+        </classes>
+    </test>
+
+    <test name="App B Tests">
+        <classes>
+            <!--
+                Add your App B test classes here as you create them.
+                Example:
+                <class name="io.mobilytix.tests.app_b.OnboardingTest"/>
+            -->
+        </classes>
+    </test>
+
+</suite>

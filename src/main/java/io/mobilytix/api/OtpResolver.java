@@ -2,6 +2,7 @@ package io.mobilytix.api;
 
 import io.mobilytix.adb.AdbCommands;
 import io.mobilytix.config.AppConfig;
+import io.mobilytix.exceptions.AuthenticationException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -65,8 +66,7 @@ public class OtpResolver {
             case OTP_SOURCE_SMS -> resolveFromSms(appConfig.getPackageName());
             case OTP_SOURCE_EMAIL -> resolveFromEmail(secret);
             case OTP_SOURCE_TOTP -> resolveFromTotp(secret);
-            default ->
-                    throw new IllegalArgumentException("Unknown OTP source: '" + otpSource + "'. Valid values are: sms, email & totp. Check your otp_source in config.yaml file");
+            default -> throw new AuthenticationException("otp", "unknown otp_source: '" + otpSource + "'. Valid values: sms, email, totp.");
         };
         log.info("OTP resolved successfully for user: {} [code redacted]", username);
         //TODO: pass otpCode to your OTP entry page object here
@@ -97,9 +97,8 @@ public class OtpResolver {
             }
             sleep(SMS_POLL_INTERVAL_MS);
         }
-        throw new RuntimeException(
-                "OTP not received via SMS within " + (SMS_TIMEOUT_MS / 1000) + " seconds. Check that the SMS was sent and the logcat tag '" +
-                        LOGCAT_TAG_SMS + "' is correct for your app.");
+        throw new AuthenticationException("otp/sms", "OTP not received via SMS within " + (SMS_TIMEOUT_MS / 1000) + " seconds. " +
+                "Check that the SMS was sent and logcat tag '" + LOGCAT_TAG_SMS + "' is correct.");
     }
 
     /**

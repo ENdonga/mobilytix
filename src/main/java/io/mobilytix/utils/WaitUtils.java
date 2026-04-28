@@ -49,7 +49,7 @@ public class WaitUtils {
      * @return the visible WebElement
      */
     public static WebElement waitForVisible(By locator, int timeoutSeconds) {
-        log.debug("Waiting {}s for visible: {}", timeoutSeconds, locator);
+        log.trace("Waiting {}s for visible: {}", timeoutSeconds, locator);
         return getWait(timeoutSeconds).until(ExpectedConditions.visibilityOfElementLocated(locator));
     }
 
@@ -60,7 +60,7 @@ public class WaitUtils {
      * @return list of visible WebElements
      */
     public static List<WebElement> waitForAllVisible(By locator) {
-        log.debug("Waiting {}s for all visible: {}", DEFAULT_TIMEOUT, locator);
+        log.trace("Waiting {}s for all visible: {}", DEFAULT_TIMEOUT, locator);
         return getWait(DEFAULT_TIMEOUT)
                 .until(ExpectedConditions.visibilityOfAllElementsLocatedBy(locator));
     }
@@ -83,7 +83,7 @@ public class WaitUtils {
      * @return the clickable WebElement
      */
     public static WebElement waitForClickable(By locator, int timeoutSeconds) {
-        log.debug("Waiting {}s for clickable: {}", timeoutSeconds, locator);
+        log.trace("Waiting {}s for clickable: {}", timeoutSeconds, locator);
         return getWait(timeoutSeconds).until(ExpectedConditions.elementToBeClickable(locator));
     }
 
@@ -95,7 +95,7 @@ public class WaitUtils {
      * @return the WebElement
      */
     public static WebElement waitForPresent(By locator) {
-        log.debug("Waiting {}s for present: {}", DEFAULT_TIMEOUT, locator);
+        log.trace("Waiting {}s for present: {}", DEFAULT_TIMEOUT, locator);
         return getWait(DEFAULT_TIMEOUT).until(ExpectedConditions.presenceOfElementLocated(locator));
     }
 
@@ -118,7 +118,7 @@ public class WaitUtils {
      * @return true when the element is no longer visible
      */
     public static boolean waitForInvisible(By locator, int timeoutSeconds) {
-        log.debug("Waiting {}s for invisible: {}", timeoutSeconds, locator);
+        log.trace("Waiting {}s for invisible: {}", timeoutSeconds, locator);
         return getWait(timeoutSeconds).until(ExpectedConditions.invisibilityOfElementLocated(locator));
     }
 
@@ -130,7 +130,7 @@ public class WaitUtils {
      * @return true when the element contains the text
      */
     public static boolean waitForText(By locator, String text) {
-        log.debug("Waiting for text '{}' in: {}", text, locator);
+        log.trace("Waiting for text '{}' in: {}", text, locator);
         return getWait(DEFAULT_TIMEOUT).until(ExpectedConditions.textToBePresentInElementLocated(locator, text));
     }
 
@@ -185,7 +185,7 @@ public class WaitUtils {
      * @return the result of the condition
      */
     public static <T> T waitForCondition(Function<AndroidDriver, T> condition, int timeoutSeconds) {
-        log.debug("Waiting {}s for custom condition", timeoutSeconds);
+        log.trace("Waiting {}s for custom condition", timeoutSeconds);
         return getWait(timeoutSeconds).until(condition::apply);
     }
 

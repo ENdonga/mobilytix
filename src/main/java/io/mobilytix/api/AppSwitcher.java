@@ -46,7 +46,7 @@ public class AppSwitcher {
 
     /**
      * Clears all app data and relaunches the app.
-     * Equivalent to a fresh install without reinstalling the APK.
+     * Equivalent to a fresh installation without reinstalling the APK.
      * Resets login state, preferences, and cached files.
      * <p>
      * Auth state in SessionContext is also reset so the next
@@ -84,7 +84,7 @@ public class AppSwitcher {
     }
 
     /**
-     * Brings the current app to the foreground if it was backgrounded.
+     * Brings the current app to the foreground if it was in the background.
      * Does nothing if the app is already in the foreground.
      */
     public void bringToForeground() {

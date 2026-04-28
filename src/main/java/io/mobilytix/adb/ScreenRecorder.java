@@ -47,6 +47,7 @@ public class ScreenRecorder {
     private static final int FILE_WRITE_DELAY_MS = 1000;
 
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern(TIMESTAMP_PATTERN);
+    private static boolean disabledLogged = false;
 
     // State — one recording at a time per instance
     private String currentDevicePath;
@@ -73,8 +74,7 @@ public class ScreenRecorder {
      * @param testName used to name the output file — spaces replaced with underscores
      */
     public void startRecording(String testName) {
-        if (!config.isScreenRecordingEnabled()) {
-            log.debug("Screen recording disabled in config — skipping");
+        if (isRecordingNotEnabled()) {
             return;
         }
         if (recording) {
@@ -89,8 +89,7 @@ public class ScreenRecorder {
         log.info("Starting screen recording: {}", currentDevicePath);
 
         recording = true;
-        recordingThread = new Thread(() ->
-                adb.shell(CMD_SCREEN_RECORD, currentDevicePath));
+        recordingThread = new Thread(() -> adb.shell(CMD_SCREEN_RECORD, currentDevicePath));
         recordingThread.setDaemon(true);
         recordingThread.start();
 
@@ -104,11 +103,9 @@ public class ScreenRecorder {
      * Does nothing if no recording is in progress or recording is disabled.
      */
     public void stopRecording() {
-        if (!config.isScreenRecordingEnabled() || !recording) {
-            log.debug("No active recording to stop");
+        if (isRecordingNotEnabled() || !recording) {
             return;
         }
-
         log.info("Stopping screen recording...");
         recording = false;
 
@@ -182,5 +179,16 @@ public class ScreenRecorder {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    private boolean isRecordingNotEnabled() {
+        if (!config.isScreenRecordingEnabled()) {
+            if (!disabledLogged) {
+                log.debug("Screen recording disabled in config");
+                disabledLogged = true;
+            }
+            return true;
+        }
+        return false;
     }
 }

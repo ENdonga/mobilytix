@@ -1,6 +1,15 @@
 framework:
   name: Mobilytix
 
+  execution_mode: "local" # local | sauce_labs — override with EXECUTION_MODE env
+
+  sauce_labs:
+    region: "eu-central-1"
+    build: "mobilytix"
+    device_name: "Android GoogleAPI Emulator"
+    platform_version: "12"
+    app_storage_filename: "MyDemoAppAndroid.apk"
+
   appium:
     # Set auto_start to true when running in CI or if you want the framework to start and stop the Appium server automatically.
     # Set to false if you prefer to start Appium manually before running tests.
@@ -8,7 +17,7 @@ framework:
     auto_start: true
     host: "127.0.0.1"
     port: 4723
-    loge_level: "info"
+    log_level: "info"
 
   # Path to the folder containing all APKs, relative to the project root.
   # All app apk_path values below are relative to this base path.
@@ -21,6 +30,7 @@ framework:
     page_load: 30 # How long to wait for a page/screen to load
 
 device:
+  # Default device used for sequential runs
   # Run `adb devices` in your terminal to find your device udid.
   # For an emulator it will look like: emulator-5554
   # For a physical device it will be a serial number e.g. R58M123ABCD
@@ -32,32 +42,22 @@ device:
   no_reset: false
   full_reset: false
 
+# Additional devices for parallel runs
+# Thread 1 uses devices[0], Thread 2 uses devices[1] etc.
+#parallel_devices:
+#  - udid: "emulator-5554"
+#  - udid: "emulator-5556"
+
 # Add a new block here for every app you want to test.
 # The key (e.g. app_a) is what you pass to @AppUnderTest("app_a").
 apps:
-  app_a:
-    app_name: "APK Analyzer App"
-    # Path to the APK relative to apk_base_path above.
-    # Full resolved path will be: apks/app_a/app_a_v1.0.apk
-    apk_path: "app_a/Apk_Analyzer.apk"
-    package_name: "sk.styk.martin.apkanalyzer"
-    activity: "sk.styk.martin.apkanalyzer.ui.main"
-    # Set requires_auth to true if the app requires login to access screens.
-    # Set to false if the app can be used without any authentication.
+  sauce_demo:
+    app_name: "Sauce Labs Demo App"
+    apk_path: "sauce_demo/MyDemoAppAndroid.apk"
+    package_name: "com.saucelabs.mydemoapp.android"
+    activity: "com.saucelabs.mydemoapp.android.view.activities.SplashActivity"
     requires_auth: false
-    # auth_type options: otp | sso | basic | none
-    auth_type: "none"
-    # otp_source options: sms | email | totp
-    # Only used when auth_type is otp.
-    otp_source: "sms"
-
-  app_b:
-    app_name: "Shopping App"
-    apk_path: "app_b/app_b_v2.1.apk"
-    package_name: "com.example.shopapp"
-    activity: "com.example.shopapp.SplashActivity"
-    requires_auth: false
-    auth_type: "none"
+    auth_type: "basic"
     otp_source: ""
 
 reporting:

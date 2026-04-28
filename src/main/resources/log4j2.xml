@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+
+    <Properties>
+        <Property name="LOG_DIR">target/logs</Property>
+        <Property name="LOG_FILE">${LOG_DIR}/mobilytix.log</Property>
+        <Property name="ARCHIVE_PATTERN">${LOG_DIR}/mobilytix-%d{yyyy-MM-dd}-%i.log.gz</Property>
+        <Property name="MAX_FILE_SIZE">10MB</Property>
+        <Property name="MAX_HISTORY">5</Property>
+        <Property name="CONSOLE_PATTERN">%d{HH:mm:ss.SSS} [%t] %-5level [%logger{36}] — %msg%n</Property>
+        <Property name="FILE_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level [%logger{36}] — %msg%n</Property>
+    </Properties>
+
+    <Appenders>
+        <!--
+            Console — INFO and above only.
+            ThresholdFilter blocks DEBUG from appearing in terminal.
+            File gets everything including DEBUG for post-run analysis.
+        -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${CONSOLE_PATTERN}"/>
+            <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+        </Console>
+
+        <RollingFile name="File" fileName="${LOG_FILE}" filePattern="${ARCHIVE_PATTERN}">
+            <PatternLayout pattern="${FILE_PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="${MAX_FILE_SIZE}"/>
+            </Policies>
+            <DefaultRolloverStrategy max="${MAX_HISTORY}"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <!--
+            Framework logger — DEBUG goes to file only, INFO+ goes to both.
+        -->
+        <Logger name="io.mobilytix" level="DEBUG" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="File"/>
+        </Logger>
+
+        <Logger name="io.appium" level="INFO" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="File"/>
+        </Logger>
+
+        <Logger name="org.openqa.selenium" level="WARN" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="File"/>
+        </Logger>
+
+        <Logger name="org.testng" level="WARN" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="File"/>
+        </Logger>
+
+        <Root level="WARN">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="File"/>
+        </Root>
+    </Loggers>
+
+</Configuration>

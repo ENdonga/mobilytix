@@ -4,6 +4,7 @@ import io.appium.java_client.service.local.AppiumDriverLocalService;
 import io.appium.java_client.service.local.AppiumServiceBuilder;
 import io.appium.java_client.service.local.flags.GeneralServerFlag;
 import io.mobilytix.config.ConfigLoader;
+import io.mobilytix.exceptions.AppiumServerException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -29,8 +30,11 @@ public class AppiumServerManager {
     private final ConfigLoader config = ConfigLoader.getInstance();
 
     private static final String STATUS_ENDPOINT = "/status";
+    private static final String REQUEST_METHOD_GET = "GET";
     private static final int CONNECTION_TIMEOUT_MS = 2000;
     private static final int SERVER_START_TIMEOUT_SECONDS = 60;
+    private static final int SERVER_READY_MAX_ATTEMPTS = 5;
+    private static final int SERVER_READY_POLL_MS = 1000;
 
     private AppiumServerManager() {
     }
@@ -53,17 +57,24 @@ public class AppiumServerManager {
      * Safe to call multiple times - subsequent calls are no-ops.
      */
     public void startIfRequired() {
+        // Sauce Labs manages its own server — nothing to start locally
+        if (ConfigLoader.getInstance().isRunningOnSauceLabs()) {
+            log.info("Sauce Labs mode - skipping local Appium server start");
+            return;
+        }
         if (!config.isAppiumAutoStart()) {
-            log.info("Appium auto_start=false - skipping server start. Ensure Appium is running manually on {}:{}", config.getAppiumHost(), config.getAppiumPort());
+            log.warn("auto_start=false -> Appium server management is manual");
             return;
         }
         if (isServerRunning()) {
-            log.info("Appium server is already running on port - skipping start {}", config.getAppiumPort());
+            log.info("Appium server is already running on port: {} - skipping start", config.getAppiumPort());
             return;
         }
-        log.info("Starting Appium Server on {}:{}", config.getAppiumHost(), config.getAppiumPort());
+        log.info("Starting Appium server on {}:{} — override source: {}", config.getAppiumHost(), config.getAppiumPort(),
+                config.getAppiumPort() != 4723 ? "env file" : "config.yaml default");
         service = buildService();
         service.start();
+        waitForAppiumServerReady();
         log.info("Appium Server started successfully. URL {}", service.getUrl());
     }
 
@@ -73,12 +84,16 @@ public class AppiumServerManager {
      * If auto_start=false this is a no-op.
      */
     public void stop() {
+        // Sauce Labs manages its own server — nothing to stop locally
+        if (ConfigLoader.getInstance().isRunningOnSauceLabs()) {
+            log.info("Sauce Labs mode - skipping local Appium server stop");
+            return;
+        }
         if (service != null && service.isRunning()) {
-            log.info("Stopping Appium Server in 3,2,1...");
             service.stop();
             log.info("Appium Server stopped successfully");
-        } else {
-            log.debug("Could not managed stopping Appium server. Investigate this.");
+        } else if (!SuiteContext.isAborted()) {
+            log.warn("Could not stop Appium server — it may have been started externally. Stop it manually if needed.");
         }
     }
 
@@ -93,7 +108,7 @@ public class AppiumServerManager {
         try {
             return new URL("http://" + config.getAppiumHost() + ":" + config.getAppiumPort());
         } catch (Exception e) {
-            throw new RuntimeException("Invalid Appium Server URL in the config", e);
+            throw new AppiumServerException("Invalid Appium Server URL in the config", e);
         }
     }
 
@@ -116,13 +131,16 @@ public class AppiumServerManager {
      * Returns true if the server responds with HTTP 200.
      * Returns false for any connection failure or non-200 response.
      */
-    private boolean isServerRunning() {
+    public boolean isServerRunning() {
+        if (ConfigLoader.getInstance().isRunningOnSauceLabs()) {
+            return true;
+        }
         String statusUrl = "http://" + config.getAppiumHost() + ":" + config.getAppiumPort() + STATUS_ENDPOINT;
         try {
             HttpURLConnection connection = (HttpURLConnection) new URL(statusUrl).openConnection();
             connection.setConnectTimeout(CONNECTION_TIMEOUT_MS);
             connection.setReadTimeout(CONNECTION_TIMEOUT_MS);
-            connection.setRequestMethod("GET");
+            connection.setRequestMethod(REQUEST_METHOD_GET);
             int responseCode = connection.getResponseCode();
             boolean running = responseCode == HttpURLConnection.HTTP_OK;
             log.debug("Appium Server status check at: {} - response: {} - running: {}", statusUrl, responseCode, running);
@@ -130,6 +148,33 @@ public class AppiumServerManager {
         } catch (IOException e) {
             log.error("Appium server status check failed (server is not running): {}", e.getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Polls the /status endpoint until the server responds or timeout is reached.
+     * Prevents driver initialisation from running before server is ready.
+     */
+    private void waitForAppiumServerReady() {
+        log.debug("Waiting for Appium server to be ready...");
+        int attempts = 0;
+        while (attempts < SERVER_READY_MAX_ATTEMPTS) {
+            if (isServerRunning()) {
+                log.info("Appium server ready after {} attempt(s)", attempts + 1);
+                return;
+            }
+            attempts++;
+            log.debug("Server not ready yet — attempt {}/{}", attempts, SERVER_READY_MAX_ATTEMPTS);
+            sleep(SERVER_READY_POLL_MS);
+        }
+        throw new AppiumServerException("Appium server did not become ready after " + SERVER_READY_MAX_ATTEMPTS + " attempts. Check if port " + config.getAppiumPort() + " is available.");
+    }
+
+    private void sleep(int millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 }

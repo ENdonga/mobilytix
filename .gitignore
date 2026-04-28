@@ -47,6 +47,7 @@ logs/
 
 # Allure results (generated — not source)
 allure-results/
+.allure
 
 # Screen recordings
 screen-recordings/

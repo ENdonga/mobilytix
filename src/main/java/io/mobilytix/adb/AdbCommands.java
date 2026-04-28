@@ -1,6 +1,8 @@
 package io.mobilytix.adb;
 
 import io.mobilytix.config.ConfigLoader;
+import io.mobilytix.exceptions.AdbCommandException;
+import io.mobilytix.exceptions.DeviceNotReadyException;
 import io.mobilytix.utils.EnvUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,10 +36,8 @@ public class AdbCommands {
     private static final String CMD_PULL = "pull";
     private static final String CMD_PUSH = "push";
     private static final String CMD_LOGCAT = "logcat";
-    private static final String CMD_INSTALL = "install";
-    private static final String CMD_UNINSTALL = "uninstall";
     private static final String CMD_DEVICES = "devices";
-    private static final String FLAG_REPLACE = "-r";
+    private static final String CMD_GET_STATE = "get-state";
     // ADB flags
     private static final String FLAG_SERIAL = "-s";
     private static final String FLAG_DUMP = "-d";
@@ -48,7 +48,7 @@ public class AdbCommands {
     private static final String SHELL_PM = "pm";
     private static final String SHELL_AM = "am";
     private static final String SHELL_INPUT = "input";
-    private static final String SHELL_GETPROP = "getprop";
+    private static final String SHELL_GET_PROP = "getprop";
     // Package Manager sub-commands
     private static final String PM_GRANT = "grant";
     private static final String PM_REVOKE = "revoke";
@@ -69,6 +69,8 @@ public class AdbCommands {
     // Device filter
     private static final String DEVICE_FILTER = "\tdevice";
     private static final String DEVICE_SPLIT = "\t";
+    private static final String DEVICE_STATE_ONLINE = "device";
+    private static final String LOGCAT_SEPARATOR_PREFIX = "---------";
 
     private AdbCommands() {
         this.udid = ConfigLoader.getInstance().getDeviceConfig().getUdid();
@@ -84,6 +86,35 @@ public class AdbCommands {
             instance = new AdbCommands();
         }
         return instance;
+    }
+
+    /**
+     * Returns true if the configured device is connected and ready.
+     * Uses `adb get-state` which returns immediately — no hanging.
+     */
+    public boolean isDeviceReady() {
+        try {
+            String output = exec(List.of(adbPath, FLAG_SERIAL, udid, CMD_GET_STATE)).trim();
+            boolean ready = output.equals(DEVICE_STATE_ONLINE);
+            log.debug("Device '{}' state: '{}' — ready: {}", udid, output, ready);
+            return ready;
+        } catch (Exception e) {
+            log.debug("Device '{}' not reachable: {}", udid, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Asserts the device is ready before proceeding.
+     * Call this at the start of any operation that requires the device.
+     * Throws a clear RuntimeException immediately instead of hanging.
+     *
+     * @throws RuntimeException if the device is not found or not ready
+     */
+    public void assertDeviceReady() {
+        if (!isDeviceReady()) {
+            throw new DeviceNotReadyException(udid);
+        }
     }
 
     /**
@@ -198,7 +229,9 @@ public class AdbCommands {
     public String getLogcat(String tag, int lines) {
         log.debug("Getting {} lines of logcat for tag: {}", lines, tag);
         List<String> cmd = new ArrayList<>(List.of(adbPath, FLAG_SERIAL, udid, CMD_LOGCAT, FLAG_DUMP, FLAG_TAIL, String.valueOf(lines), FLAG_LOGCAT_SILENT, tag));
-        return exec(cmd);
+        String output = filterLogcatNoise(exec(cmd));
+        log.debug("[LOGCAT output]\n{}\n[END LOGCAT]", output);
+        return output;
     }
 
     /**
@@ -210,7 +243,9 @@ public class AdbCommands {
     public String getLogcat(int lines) {
         log.debug("Getting {} lines of logcat (no tag filter)", lines);
         List<String> cmd = new ArrayList<>(List.of(adbPath, FLAG_SERIAL, udid, CMD_LOGCAT, FLAG_DUMP, FLAG_TAIL, String.valueOf(lines)));
-        return exec(cmd);
+        String output = filterLogcatNoise(exec(cmd));
+        log.debug("[LOGCAT output]\n{}\n[END LOGCAT]", output);
+        return output;
     }
 
     /**
@@ -249,14 +284,14 @@ public class AdbCommands {
      * Returns the Android version string of the connected device.
      */
     public String getAndroidVersion() {
-        return shell(SHELL_GETPROP, PROP_ANDROID_VERSION).trim();
+        return shell(SHELL_GET_PROP, PROP_ANDROID_VERSION).trim();
     }
 
     /**
      * Returns the device model name.
      */
     public String getDeviceModel() {
-        return shell(SHELL_GETPROP, PROP_DEVICE_MODEL).trim();
+        return shell(SHELL_GET_PROP, PROP_DEVICE_MODEL).trim();
     }
 
     /**
@@ -273,7 +308,7 @@ public class AdbCommands {
                     .map(line -> line.split(DEVICE_SPLIT)[0].trim())
                     .toList();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to list connected devices", e);
+            throw new AdbCommandException("Failed to list connected devices", e);
         }
     }
 
@@ -286,7 +321,7 @@ public class AdbCommands {
      * @throws RuntimeException if the process cannot be started
      */
     public String exec(List<String> cmd) {
-        log.debug("ADB exec: {}", String.join(" ", cmd));
+        log.trace("ADB exec: {}", String.join(" ", cmd));
         try {
             Process process = new ProcessBuilder(cmd).redirectErrorStream(true).start();
             String output = new BufferedReader(new InputStreamReader(process.getInputStream()))
@@ -295,12 +330,29 @@ public class AdbCommands {
             int exitCode = process.waitFor();
             if (exitCode != 0) {
                 log.warn("ADB command exited with code {}: {}", exitCode, output);
-            } else {
-                log.debug("ADB output: {}", output);
+            } else if (!output.contains("\n")) {
+                // Single line output — safe to log inline
+                log.trace("ADB output: {}", output);
             }
+            // Multi-line output (logcat) is logged by the caller with [LOGCAT] label
             return output;
         } catch (Exception e) {
-            throw new RuntimeException("ADB command failed: " + String.join(" ", cmd) + " - " + e.getMessage(), e);
+            throw new AdbCommandException(String.join(" ", cmd), e);
         }
+    }
+
+    /**
+     * Removes logcat buffer separator lines from output.
+     * Android emits several variants:
+     * "--------- beginning of main"
+     * "--------- beginning of system"
+     * "--------- beginning of crash"
+     * "--------- end of main"
+     * "--------- end of system"
+     * "--------- switch to main"
+     * "--------- switch to system"
+     */
+    private String filterLogcatNoise(String output) {
+        return output.lines().filter(line -> !line.startsWith(LOGCAT_SEPARATOR_PREFIX)).collect(Collectors.joining("\n"));
     }
 }
