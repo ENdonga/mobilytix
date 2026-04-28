@@ -80,6 +80,8 @@ jobs:
           APPIUM_AUTO_START: "true"
           DEVICE_UDID: "emulator-5554"
           APPIUM_LOG_LEVEL: "warn"
+          PAGE_LOAD_TIMEOUT: "45"
+          EXPLICIT_TIMEOUT: "30"
           SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME }}
           SAUCE_PASSWORD: ${{ secrets.SAUCE_PASSWORD }}
           SAUCE_LOCKED_USERNAME: ${{ secrets.SAUCE_LOCKED_USERNAME }}

@@ -51,6 +51,11 @@ public class ConfigLoader {
     private static final String ENV_DEVICE_UDID = "DEVICE_UDID";
     private static final String PROP_DEVICE_PLATFORM_VERSION = "device.platform_version";
     private static final String ENV_DEVICE_PLATFORM_VERSION = "DEVICE_PLATFORM_VERSION";
+    private static final String PROP_DEVICE_NO_RESET = "device.no_reset";
+    private static final String ENV_DEVICE_NO_RESET = "DEVICE_NO_RESET";
+    private static final String PROP_DEVICE_FULL_RESET = "device.full_reset";
+    private static final String ENV_DEVICE_FULL_RESET = "DEVICE_FULL_RESET";
+
     // Appium
     private static final String PROP_APPIUM_HOST = "appium.host";
     private static final String ENV_APPIUM_HOST = "APPIUM_HOST";
@@ -64,15 +69,27 @@ public class ConfigLoader {
     // Execution mode i.e local or Sauce Labs cloud
     private static final String PROP_EXECUTION_MODE_OVERRIDE = "execution_mode";
     private static final String ENV_EXECUTION_MODE_OVERRIDE = "EXECUTION_MODE";
+
     // Reporting
     private static final String PROP_EXTENT_OUTPUT_PATH = "extent.output_path";
     private static final String ENV_EXTENT_OUTPUT_PATH = "EXTENT_OUTPUT_PATH";
     private static final String PROP_SCREEN_RECORDING_ENABLED = "screen.recording.enabled";
     private static final String ENV_SCREEN_RECORDING_ENABLED = "SCREEN_RECORDING_ENABLED";
+    private static final String PROP_SCREENSHOT_ON_FAILURE = "screenshot.on_failure";
+    private static final String ENV_SCREENSHOT_ON_FAILURE = "SCREENSHOT_ON_FAILURE";
+    private static final String PROP_SCREENSHOT_ON_PASS = "screenshot.on_pass";
+    private static final String ENV_SCREENSHOT_ON_PASS = "SCREENSHOT_ON_PASS";
+
     // Authentication — credentials only come from env, never config.yaml
     private static final String ENV_OTP_API_TOKEN = "OTP_API_TOKEN";
     private static final String ENV_SSO_USERNAME = "SSO_USERNAME";
     private static final String ENV_SSO_PASSWORD = "SSO_PASSWORD";
+
+    // Timeouts
+    private static final String PROP_EXPLICIT_TIMEOUT = "explicit.timeout";
+    private static final String ENV_EXPLICIT_TIMEOUT = "EXPLICIT_TIMEOUT";
+    private static final String PROP_PAGE_LOAD_TIMEOUT = "page.load.timeout";
+    private static final String ENV_PAGE_LOAD_TIMEOUT = "PAGE_LOAD_TIMEOUT";
 
     private ConfigLoader() {
         mapper = new ObjectMapper(new YAMLFactory());
@@ -430,6 +447,18 @@ public class ConfigLoader {
             device.setPlatformVersion(platformOverride);
         }
 
+        String noResetOverride = resolveOverride(PROP_DEVICE_NO_RESET, ENV_DEVICE_NO_RESET);
+        if (noResetOverride != null && Boolean.parseBoolean(noResetOverride) != device.isNoReset()) {
+            log.info("Device no_reset overridden: {} → {}", device.isNoReset(), noResetOverride);
+            device.setNoReset(Boolean.parseBoolean(noResetOverride));
+        }
+
+        String fullResetOverride = resolveOverride(PROP_DEVICE_FULL_RESET, ENV_DEVICE_FULL_RESET);
+        if (fullResetOverride != null && Boolean.parseBoolean(fullResetOverride) != device.isFullReset()) {
+            log.info("Device full_reset overridden: {} → {}", device.isFullReset(), fullResetOverride);
+            device.setFullReset(Boolean.parseBoolean(fullResetOverride));
+        }
+
         // ---- Reporting ----
         String extentPathOverride = resolveOverride(PROP_EXTENT_OUTPUT_PATH, ENV_EXTENT_OUTPUT_PATH);
         if (extentPathOverride != null && !extentPathOverride.equals(reporting.getExtent().getOutputPath())) {
@@ -443,6 +472,31 @@ public class ConfigLoader {
             log.info("Screen recording enabled overridden to: {} (source: {})", screenRecordOverride,
                     getOverrideSource(PROP_SCREEN_RECORDING_ENABLED, ENV_SCREEN_RECORDING_ENABLED));
             reporting.getScreenRecording().setEnabled(Boolean.parseBoolean(screenRecordOverride));
+        }
+
+        String screenshotFailureOverride = resolveOverride(PROP_SCREENSHOT_ON_FAILURE, ENV_SCREENSHOT_ON_FAILURE);
+        if (screenshotFailureOverride != null && Boolean.parseBoolean(screenshotFailureOverride) != reporting.getScreenshots().isOnFailure()) {
+            log.info("Screenshot on_failure overridden: {} → {}", reporting.getScreenshots().isOnFailure(), screenshotFailureOverride);
+            reporting.getScreenshots().setOnFailure(Boolean.parseBoolean(screenshotFailureOverride));
+        }
+
+        String screenshotPassOverride = resolveOverride(PROP_SCREENSHOT_ON_PASS, ENV_SCREENSHOT_ON_PASS);
+        if (screenshotPassOverride != null && Boolean.parseBoolean(screenshotPassOverride) != reporting.getScreenshots().isOnPass()) {
+            log.info("Screenshot on_pass overridden: {} → {}", reporting.getScreenshots().isOnPass(), screenshotPassOverride);
+            reporting.getScreenshots().setOnPass(Boolean.parseBoolean(screenshotPassOverride));
+        }
+
+        // Timeouts overrides
+        String explicitTimeoutOverride = resolveOverride(PROP_EXPLICIT_TIMEOUT, ENV_EXPLICIT_TIMEOUT);
+        if (explicitTimeoutOverride != null && Integer.parseInt(explicitTimeoutOverride) != framework.getTimeouts().getExplicit()) {
+            log.info("Explicit timeout overridden: {} → {}s", framework.getTimeouts().getExplicit(), explicitTimeoutOverride);
+            framework.getTimeouts().setExplicit(Integer.parseInt(explicitTimeoutOverride));
+        }
+
+        String pageLoadTimeoutOverride = resolveOverride(PROP_PAGE_LOAD_TIMEOUT, ENV_PAGE_LOAD_TIMEOUT);
+        if (pageLoadTimeoutOverride != null && Integer.parseInt(pageLoadTimeoutOverride) != framework.getTimeouts().getPageLoad()) {
+            log.info("Page load timeout overridden: {} → {}s", framework.getTimeouts().getPageLoad(), pageLoadTimeoutOverride);
+            framework.getTimeouts().setPageLoad(Integer.parseInt(pageLoadTimeoutOverride));
         }
     }
 }
