@@ -41,9 +41,15 @@ public class CatalogPage extends BasePage {
         return isProductListDisplayed();
     }
 
+    public void waitForLoad() {
+        log.info("Waiting for catalog to load");
+        WaitUtils.waitForVisible(PRODUCT_LIST);
+    }
+
     // Navigation
     public CatalogPage tapMenu() {
         tap(MENU_BUTTON);
+        MenuPage.getInstance().waitForMenuToOpen();
         return this;
     }
 

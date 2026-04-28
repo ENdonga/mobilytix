@@ -39,6 +39,7 @@ public class LoginTest extends BaseTest {
     @Story("Valid login")
     @Severity(SeverityLevel.BLOCKER)
     public void testValidLogin() {
+        catalogPage.waitForLoad();
         AllureAttachments.step("Navigate to login with app reset");
         catalogPage.resetAndNavigateToLogin();
         AllureAttachments.step("Enter valid credentials");
@@ -69,6 +70,7 @@ public class LoginTest extends BaseTest {
     @Story("Field validation")
     @Severity(SeverityLevel.NORMAL)
     public void testEmptyUsernameShowsError() {
+        catalogPage.waitForLoad();
         AllureAttachments.step("Navigate to login without reset");
         catalogPage.navigateToLogin();
         AllureAttachments.step("Leave username empty and enter password only");

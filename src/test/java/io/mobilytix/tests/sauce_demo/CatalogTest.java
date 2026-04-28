@@ -28,8 +28,10 @@ public class CatalogTest extends BaseTest {
 
     @BeforeMethod
     public void resetCatalogToDefaultState() {
+        catalogPage.waitForLoad();
         // Reset ensures catalog starts with default sort (Name - Ascending) and no items in cart between tests
         catalogPage.resetAppState();
+        catalogPage.waitForLoad();
         Assert.assertTrue(catalogPage.isLoaded(), "Catalog page should be loaded before each test");
     }
 
