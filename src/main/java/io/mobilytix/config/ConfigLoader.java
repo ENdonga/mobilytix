@@ -58,6 +58,10 @@ public class ConfigLoader {
     private static final String ENV_APPIUM_PORT = "APPIUM_PORT";
     private static final String PROP_APPIUM_AUTO_START = "appium.auto_start";
     private static final String ENV_APPIUM_AUTO_START = "APPIUM_AUTO_START";
+    private static final String PROP_APPIUM_LOG_LEVEL = "appium.log_level";
+    private static final String ENV_APPIUM_LOG_LEVEL = "APPIUM_LOG_LEVEL";
+
+    // Execution mode i.e local or Sauce Labs cloud
     private static final String PROP_EXECUTION_MODE_OVERRIDE = "execution_mode";
     private static final String ENV_EXECUTION_MODE_OVERRIDE = "EXECUTION_MODE";
     // Reporting
@@ -399,6 +403,13 @@ public class ConfigLoader {
             log.info("Appium auto_start overridden: {} → {} (source: {})", framework.getAppium().isAutoStart(),
                     autoStartOverride, getOverrideSource(PROP_APPIUM_AUTO_START, ENV_APPIUM_AUTO_START));
             framework.getAppium().setAutoStart(Boolean.parseBoolean(autoStartOverride));
+        }
+
+        String logLevelOverride = resolveOverride(PROP_APPIUM_LOG_LEVEL, ENV_APPIUM_LOG_LEVEL);
+        if (logLevelOverride != null && !logLevelOverride.equals(framework.getAppium().getLogLevel())) {
+            log.info("Appium log_level overridden: {} → {} (source: {})",
+                    framework.getAppium().getLogLevel(), logLevelOverride, getOverrideSource(PROP_APPIUM_LOG_LEVEL, ENV_APPIUM_LOG_LEVEL));
+            framework.getAppium().setLogLevel(logLevelOverride);
         }
 
         // ---- Device ----
