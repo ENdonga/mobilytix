@@ -1,4 +1,5 @@
 # Mobilytix
+![CI](https://github.com/ENdonga/mobilytix/actions/workflows/ci.yml/badge.svg)
 
 A reusable Android automation framework built with Java, Appium 2.x or later, and Maven.
 
@@ -74,13 +75,6 @@ Covers catalog browsing, login, cart, checkout, and account management.
 Username: bob@example.com
 Password: 10203040
 ```
-
-### APK Analyzer (secondary)
-
-Used for framework smoke testing — no login required.
-
-**Download:**
-[https://www.apkmirror.com/apk/martin-styk/apk-analyzer/apk-analyzer-3-4-0-release/apk-analyzer-3-4-0-2-android-apk-download/download/?key=751552fe95c00b4d1f06becb6534b9d98fe24da9&forcebaseapk=true](https://www.apkmirror.com/apk/martin-styk/apk-analyzer/apk-analyzer-3-4-0-release/apk-analyzer-3-4-0-2-android-apk-download/download/?key=751552fe95c00b4d1f06becb6534b9d98fe24da9&forcebaseapk=true)
 
  ```bash
 adb shell pm path sk.styk.martin.apkanalyzer

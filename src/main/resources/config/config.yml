@@ -50,22 +50,6 @@ device:
 # Add a new block here for every app you want to test.
 # The key (e.g. app_a) is what you pass to @AppUnderTest("app_a").
 apps:
-  app_a:
-    app_name: "APK Analyzer App"
-    # Path to the APK relative to apk_base_path above.
-    # Full resolved path will be: apks/app_a/app_a_v1.0.apk
-    apk_path: "app_a/Apk_Analyzer.apk"
-    package_name: "sk.styk.martin.apkanalyzer"
-    activity: "sk.styk.martin.apkanalyzer.ui.main.MainActivity"
-    # Set requires_auth to true if the app requires login to access screens.
-    # Set to false if the app can be used without any authentication.
-    requires_auth: false
-    # auth_type options: otp | sso | basic | none
-    auth_type: "magic_link"
-    # otp_source options: sms | email | totp
-    # Only used when auth_type is otp.
-    otp_source: "sms"
-
   sauce_demo:
     app_name: "Sauce Labs Demo App"
     apk_path: "sauce_demo/MyDemoAppAndroid.apk"

@@ -24,7 +24,7 @@ public class EnvLoader {
     private static final Logger log = LogManager.getLogger(EnvLoader.class);
     private static final String ENV_FILE = ".env";
     private static boolean loaded = false;
-    private static final List<String> SENSITIVE_KEY_PATTERNS = List.of("PASSWORD", "TOKEN", "SECRET", "KEY", "CREDENTIAL", "AUTH", "API");
+    private static final List<String> SENSITIVE_KEY_PATTERNS = List.of("PASSWORD", "TOKEN", "SECRET", "KEY", "CREDENTIAL", "AUTH", "API", "SAUCE_LABS");
 
     private EnvLoader() {
     }

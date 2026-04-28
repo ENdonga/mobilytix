@@ -1,0 +1,133 @@
+name: Mobilytix CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Run tests on Android Emulator
+    runs-on: ubuntu-latest
+
+    steps:
+      # Setup
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Enable KVM for emulator hardware acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Set up Node.js for Appium
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Appium and drivers
+        run: |
+          npm install -g appium
+          npm install -g @appium/doctor
+          appium driver install uiautomator2
+
+      - name: Verify Appium installation
+        run: |
+          appium -v
+          appium-doctor --android
+          appium driver list --installed
+        continue-on-error: true
+
+      # APK — download from GitHub releases, no Sauce Labs account needed
+      - name: Download Sauce Labs Demo APK
+        run: |
+          mkdir -p apks/sauce_demo
+          curl -L \
+            "https://github.com/saucelabs/my-demo-app-android/releases/download/1.0.12/MyDemoAppAndroid.apk" \
+            -o apks/sauce_demo/MyDemoAppAndroid.apk
+          echo "APK downloaded:"
+          ls -lh apks/sauce_demo/
+
+      # Tests — emulator runner starts emulator, runs script, shuts down
+      - name: Run tests on Android Emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          EXECUTION_MODE: "local"
+          APPIUM_AUTO_START: "true"
+          DEVICE_UDID: "emulator-5554"
+          SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME }}
+          SAUCE_PASSWORD: ${{ secrets.SAUCE_PASSWORD }}
+          SAUCE_LOCKED_USERNAME: ${{ secrets.SAUCE_LOCKED_USERNAME }}
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: Nexus 6
+          avd-name: mobilytix_emulator
+          emulator-options: -no-snapshot -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect
+          disable-animations: true
+          script: ./mvnw clean test -Dtestng.suite=testng.xml
+
+      # Run tests on SauceLabs provider
+      #      Remove the emulator runner step entirely when using Sauce Labs.
+      #      - name: Upload APK to Sauce Labs storage
+      #        env:
+      #          SAUCE_LABS_USERNAME: ${{ secrets.SAUCE_LABS_USERNAME }}
+      #          SAUCE_LABS_ACCESS_KEY: ${{ secrets.SAUCE_LABS_ACCESS_KEY }}
+      #        run: |
+      #          curl -u "$SAUCE_LABS_USERNAME:$SAUCE_LABS_ACCESS_KEY" \
+      #            -X POST "https://api.eu-central-1.saucelabs.com/v1/storage/upload" \
+      #            -H "Content-Type: multipart/form-data" \
+      #            -F "payload=@apks/sauce_demo/MyDemoAppAndroid.apk" \
+      #            -F "name=MyDemoAppAndroid.apk" \
+      #            --fail-with-body
+      #
+      #      - name: Run tests on Sauce Labs
+      #        env:
+      #          EXECUTION_MODE: sauce_labs
+      #          APPIUM_AUTO_START: "false"
+      #          SAUCE_LABS_USERNAME: ${{ secrets.SAUCE_LABS_USERNAME }}
+      #          SAUCE_LABS_ACCESS_KEY: ${{ secrets.SAUCE_LABS_ACCESS_KEY }}
+      #          SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME }}
+      #          SAUCE_PASSWORD: ${{ secrets.SAUCE_PASSWORD }}
+      #          SAUCE_LOCKED_USERNAME: ${{ secrets.SAUCE_LOCKED_USERNAME }}
+      #        run: ./mvnw clean test -Dtestng.suite=testng.xml
+
+      # Reports — always upload even if tests failed
+      - name: Generate Allure report
+        if: always()
+        run: ./mvnw allure:report
+
+      - name: Upload Allure report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: target/site/allure-maven-plugin/
+          retention-days: 30
+
+      - name: Upload Extent report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: extent-report
+          path: target/extent-reports/
+          retention-days: 30
+
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs
+          path: target/logs/
+          retention-days: 30
