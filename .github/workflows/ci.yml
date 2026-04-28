@@ -52,11 +52,14 @@ jobs:
       - name: Download Sauce Labs Demo APK
         run: |
           mkdir -p apks/sauce_demo
-          curl -L \
-            "https://github.com/saucelabs/my-demo-app-android/releases/download/1.0.12/MyDemoAppAndroid.apk" \
-            -o apks/sauce_demo/MyDemoAppAndroid.apk
-          echo "APK downloaded:"
-          ls -lh apks/sauce_demo/
+          APK_URL=$(curl -s https://api.github.com/repos/saucelabs/my-demo-app-android/releases/latest \
+            | grep "browser_download_url" \
+            | grep "\.apk" \
+            | cut -d '"' -f 4)
+          echo "Downloading from: $APK_URL"
+          curl -L "$APK_URL" -o apks/sauce_demo/MyDemoAppAndroid.apk
+          file apks/sauce_demo/MyDemoAppAndroid.apk
+          ls -lh apks/sauce_demo/MyDemoAppAndroid.apk
 
       # Tests — emulator runner starts emulator, runs script, shuts down
       - name: Run tests on Android Emulator
