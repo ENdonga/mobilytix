@@ -51,7 +51,11 @@ jobs:
         run: |
           npm install -g appium@latest
           npm install -g @appium/doctor
-          appium driver install uiautomator2
+          if appium driver list --installed | grep -q "uiautomator2"; then
+            echo "uiautomator2 already installed — skipping"
+          else
+            appium driver install uiautomator2
+          fi
 
       - name: Verify Appium installation
         run: |
