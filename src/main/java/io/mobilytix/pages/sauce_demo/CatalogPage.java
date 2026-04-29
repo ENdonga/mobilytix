@@ -2,7 +2,6 @@ package io.mobilytix.pages.sauce_demo;
 
 import io.mobilytix.utils.BasePage;
 import io.mobilytix.utils.LocatorFactory;
-import io.mobilytix.utils.PageWait;
 import io.mobilytix.utils.WaitUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -17,7 +16,6 @@ import java.util.List;
  */
 public class CatalogPage extends BasePage {
     private static final By PRODUCT_LIST = LocatorFactory.byId("productRV");
-    private static final By FIRST_PRODUCT_NAME = LocatorFactory.byText("Sauce Labs Backpack");
     private static final By MENU_BUTTON = LocatorFactory.byAccessibility("View menu");
     private static final By CART_BUTTON = LocatorFactory.byAccessibility("View cart");
     private static final By SORT_BUTTON = LocatorFactory.byId("sortIV");
@@ -51,7 +49,7 @@ public class CatalogPage extends BasePage {
     @Override
     public void waitForPageLoad() {
         log.info("Waiting for catalog page to load");
-        waitFor(FIRST_PRODUCT_NAME).toBeVisible().then(MENU_BUTTON).toBeClickable().done();
+        waitFor(PRODUCT_LIST).toBeVisible().then(MENU_BUTTON).toBeClickable().done();
     }
 
     // Navigation
