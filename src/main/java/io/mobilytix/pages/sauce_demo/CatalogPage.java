@@ -1,5 +1,7 @@
 package io.mobilytix.pages.sauce_demo;
 
+import io.mobilytix.adb.AdbCommands;
+import io.mobilytix.core.SessionContext;
 import io.mobilytix.utils.BasePage;
 import io.mobilytix.utils.LocatorFactory;
 import io.mobilytix.utils.WaitUtils;
@@ -96,6 +98,14 @@ public class CatalogPage extends BasePage {
     public void resetAppState() {
         tapMenu();
         MenuPage.getInstance().resetAppStateAndConfirm();
+        waitForPageLoad();
+    }
+
+    public void resetAppViaAdb() {
+        String packageName = SessionContext.getAppConfig().getPackageName();
+        String activity = SessionContext.getAppConfig().getActivity();
+        AdbCommands.getInstance().clearAppData(packageName);
+        AdbCommands.getInstance().restartApp(packageName, activity);
         waitForPageLoad();
     }
 

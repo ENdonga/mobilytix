@@ -44,6 +44,7 @@ public class AdbCommands {
     private static final String FLAG_TAIL = "-t";
     private static final String FLAG_CLEAR = "-c";
     private static final String FLAG_LOGCAT_SILENT = "-s";
+    private static final String FLAG_COMPONENT_NAME = "-n";
     // ADB Shell sub-commands
     private static final String SHELL_PM = "pm";
     private static final String SHELL_AM = "am";
@@ -58,6 +59,7 @@ public class AdbCommands {
     private static final String PM_PACKAGE_PREFIX = "package:";
     // Activity Manager Sub commands
     private static final String AM_FORCE_STOP = "force-stop";
+    private static final String AM_START = "start";
     // Input sub-commands
     private static final String INPUT_KEYEVENT = "keyevent";
     // Getprop keys
@@ -165,6 +167,12 @@ public class AdbCommands {
     public void clearAppData(String packageName) {
         log.info("Clearing app data for '{}'", packageName);
         shell(SHELL_PM, PM_CLEAR, packageName);
+    }
+
+    public void restartApp(String packageName, String activity) {
+        log.info("Restarting app: {}", packageName);
+        shell(SHELL_AM, AM_FORCE_STOP, packageName);
+        shell(SHELL_AM, AM_START, FLAG_COMPONENT_NAME, packageName + "/" + activity);
     }
 
     /**
