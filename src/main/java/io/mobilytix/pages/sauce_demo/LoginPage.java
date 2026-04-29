@@ -2,6 +2,7 @@ package io.mobilytix.pages.sauce_demo;
 
 import io.mobilytix.utils.BasePage;
 import io.mobilytix.utils.LocatorFactory;
+import io.mobilytix.utils.WaitUtils;
 import org.openqa.selenium.By;
 
 /**
@@ -38,6 +39,11 @@ public class LoginPage extends BasePage {
         return isDisplayed(LOGIN_BUTTON);
     }
 
+    @Override
+    public void waitForPageLoad() {
+        waitFor(LOGIN_BUTTON).toBeVisible().toBeClickable().done();
+    }
+
     /**
      * Enters credentials and taps login in one call.
      *
@@ -65,6 +71,12 @@ public class LoginPage extends BasePage {
     public LoginPage enterPassword(String password) {
         typeSecret(PASSWORD_FIELD, password);
         return this;
+    }
+
+    public void clearFields() {
+        log.debug("Clearing login fields");
+        WaitUtils.waitForClickable(USERNAME_FIELD).clear();
+        WaitUtils.waitForClickable(PASSWORD_FIELD).clear();
     }
 
     public void tapLoginButton() {

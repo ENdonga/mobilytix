@@ -35,6 +35,30 @@ public abstract class BasePage {
     public static final String UP = "up";
 
     /**
+     * Every page object must implement this method.
+     * It should check for a key element that confirms the page is fully loaded.
+     * <p>
+     * Called by BaseTest and page navigation methods to verify the correct screen is displayed before interacting with it.
+     * <p>
+     * Example implementation:
+     * public boolean isLoaded() {
+     * return isDisplayed(LOGIN_BUTTON);
+     * }
+     *
+     * @return true if the page is fully loaded and ready for interaction
+     */
+    public abstract boolean isLoaded();
+
+    /**
+     * Waits for the page to be fully loaded and ready for interaction.
+     * Every page must define what "fully loaded" means — not just visible
+     * but interactive. Called before any test interaction begins.
+     * <p>
+     * Implement by waiting for the most stable interactive element on the screen.
+     */
+    public abstract void waitForPageLoad();
+
+    /**
      * Returns the AndroidDriver for the current thread.
      * Prefer using the protected interaction methods over calling this directly.
      */
@@ -242,19 +266,15 @@ public abstract class BasePage {
     }
 
     /**
-     * Every page object must implement this method.
-     * It should check for a key element that confirms the page is fully loaded.
+     * Fluent wait builder for chaining visibility and clickability checks.
      * <p>
-     * Called by BaseTest and page navigation methods to verify the correct screen is displayed before interacting with it.
-     * <p>
-     * Example implementation:
-     * public boolean isLoaded() {
-     * return isDisplayed(LOGIN_BUTTON);
-     * }
-     *
-     * @return true if the page is fully loaded and ready for interaction
+     * Usage:
+     * waitFor(MENU_BUTTON).toBeVisible().toBeClickable().done();
+     * waitFor(PRODUCT_LIST).toBeVisible().then(MENU_BUTTON).toBeClickable().done();
      */
-    public abstract boolean isLoaded();
+    protected PageWait waitFor(By locator) {
+        return new PageWait(locator);
+    }
 
     private void performType(By locator, String text) {
         WebElement field = WaitUtils.waitForClickable(locator);

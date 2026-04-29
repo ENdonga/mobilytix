@@ -50,6 +50,11 @@ public class MenuPage extends BasePage {
         return isDisplayed(DRAWER_MENU);
     }
 
+    @Override
+    public void waitForPageLoad() {
+        waitFor(MENU_RESET_APP_STATE).toBeVisible().toBeClickable().done();
+    }
+
     /**
      * Navigates to the login screen from the menu.
      * Handles two states:
@@ -71,19 +76,24 @@ public class MenuPage extends BasePage {
 
     /**
      * Logs the user out via the menu.
-     * Handles the confirmation dialog that appears after tapping Log Out.
-     * After logout the drawer closes automatically.
+     * Handles two cases:
+     * - Normal session logout: confirmation dialog appears → confirm it
+     * - After app state reset: no dialog appears → user is logged out directly
      * <p>
      * Precondition: menu drawer must already be open.
      */
     public void logout() {
         tap(MENU_LOGOUT);
-        waitForLogoutDialog();
-        tap(LOGOUT_DIALOG_CONFIRM);
+        if (isDisplayed(LOGOUT_DIALOG_TITLE, 3)) {
+            log.debug("Logout confirmation dialog appeared - confirming");
+            tap(LOGOUT_DIALOG_CONFIRM);
+        } else {
+            log.debug("No logout dialog - user logged out directly");
+        }
     }
 
     public void waitForMenuToOpen() {
-        WaitUtils.waitForVisible(MENU_CATALOG);
+        WaitUtils.waitForVisible(MENU_RESET_APP_STATE);
     }
 
     /**
@@ -111,7 +121,7 @@ public class MenuPage extends BasePage {
         log.debug("Confirming reset dialog");
         tap(DIALOG_RESET_BUTTON);
         log.trace("Dismissing success notification");
-        waitForResetSuccess();
+        waitFor(DIALOG_RESET_SUCCESS_MESSAGE).toBeVisible().toBeClickable().done();
         tap(DIALOG_OK_BUTTON);
     }
 
@@ -130,6 +140,14 @@ public class MenuPage extends BasePage {
 
     public boolean isResetDialogDisplayed() {
         return isDisplayed(RESET_APP_DIALOG_TITLE, 1) || isDisplayed(DIALOG_RESET_SUCCESS_MESSAGE, 1);
+    }
+
+    public boolean isLoggedIn() {
+        return isDisplayed(MENU_LOGOUT, 2);
+    }
+
+    public boolean isLoggedOut() {
+        return isDisplayed(MENU_LOGIN, 2);
     }
 
     private void waitForResetSuccess() {

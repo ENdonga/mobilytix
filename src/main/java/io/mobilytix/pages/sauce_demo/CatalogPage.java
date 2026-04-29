@@ -2,6 +2,7 @@ package io.mobilytix.pages.sauce_demo;
 
 import io.mobilytix.utils.BasePage;
 import io.mobilytix.utils.LocatorFactory;
+import io.mobilytix.utils.PageWait;
 import io.mobilytix.utils.WaitUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -16,6 +17,7 @@ import java.util.List;
  */
 public class CatalogPage extends BasePage {
     private static final By PRODUCT_LIST = LocatorFactory.byId("productRV");
+    private static final By FIRST_PRODUCT_NAME = LocatorFactory.byText("Sauce Labs Backpack");
     private static final By MENU_BUTTON = LocatorFactory.byAccessibility("View menu");
     private static final By CART_BUTTON = LocatorFactory.byAccessibility("View cart");
     private static final By SORT_BUTTON = LocatorFactory.byId("sortIV");
@@ -38,18 +40,24 @@ public class CatalogPage extends BasePage {
 
     @Override
     public boolean isLoaded() {
-        return isProductListDisplayed();
+        return isDisplayed(PRODUCT_LIST);
     }
 
-    public void waitForLoad() {
-        log.info("Waiting for catalog to load");
-        WaitUtils.waitForVisible(PRODUCT_LIST);
+    /**
+     * Waits for catalog page to be fully loaded and interactive.
+     * Waits for first product to be visible AND menu button to be clickable.
+     * The menu button confirms the header is fully rendered — not just the list.
+     */
+    @Override
+    public void waitForPageLoad() {
+        log.info("Waiting for catalog page to load");
+        waitFor(FIRST_PRODUCT_NAME).toBeVisible().then(MENU_BUTTON).toBeClickable().done();
     }
 
     // Navigation
     public CatalogPage tapMenu() {
         tap(MENU_BUTTON);
-        MenuPage.getInstance().waitForMenuToOpen();
+        MenuPage.getInstance().waitForPageLoad();
         return this;
     }
 
@@ -90,6 +98,12 @@ public class CatalogPage extends BasePage {
     public void resetAppState() {
         tapMenu();
         MenuPage.getInstance().resetAppStateAndConfirm();
+        waitForPageLoad();
+    }
+
+    public boolean isUserLoggedIn() {
+        tapMenu();
+        return MenuPage.getInstance().isLoggedIn();
     }
 
     // Product data - reads currently visible items only

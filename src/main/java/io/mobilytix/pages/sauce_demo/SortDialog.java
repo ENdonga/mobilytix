@@ -29,6 +29,11 @@ public class SortDialog extends BasePage {
         return isDisplayed(DIALOG_TITLE, 2);
     }
 
+    @Override
+    public void waitForPageLoad() {
+        waitFor(DIALOG_TITLE).toBeVisible().done();
+    }
+
     public void selectNameAscending() {
         log.debug("Sort: Name (A-Z)");
         waitForDialogToOpen();
@@ -54,6 +59,6 @@ public class SortDialog extends BasePage {
     }
 
     private void waitForDialogToOpen() {
-        WaitUtils.waitForVisible(DIALOG_TITLE);
+        waitFor(DIALOG_TITLE).toBeVisible().done();
     }
 }

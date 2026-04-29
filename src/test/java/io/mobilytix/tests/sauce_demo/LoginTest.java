@@ -6,11 +6,11 @@ import io.mobilytix.config.CredentialKeys;
 import io.mobilytix.pages.sauce_demo.CatalogPage;
 import io.mobilytix.pages.sauce_demo.LoginPage;
 import io.mobilytix.pages.sauce_demo.MenuPage;
-import io.mobilytix.reporting.AllureAttachments;
 import io.mobilytix.tests.BaseTest;
 import io.qameta.allure.*;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 @AppUnderTest("sauce_demo")
@@ -35,111 +35,94 @@ public class LoginTest extends BaseTest {
         log.info("Login tests will use username: {}", validUsername);
     }
 
+    @BeforeMethod
+    public void resetToLoginScreen() {
+        if (loginPage.isLoaded()) {
+            log.info("Already on login screen — skipping navigation");
+            loginPage.clearFields();
+            return;
+        }
+        catalogPage.waitForPageLoad();
+        catalogPage.resetAndNavigateToLogin();
+        loginPage.waitForPageLoad();
+    }
+
     @Test(description = "Valid user can log in successfully", priority = 1)
     @Story("Valid login")
     @Severity(SeverityLevel.BLOCKER)
     public void testValidLogin() {
-        catalogPage.waitForLoad();
-        AllureAttachments.step("Navigate to login with app reset");
-        catalogPage.resetAndNavigateToLogin();
-        AllureAttachments.step("Enter valid credentials");
+        // Given the catalog is loaded and app state is clean
+        // When the user logs in with valid credentials
         loginPage.login(validUsername, validPassword);
-        AllureAttachments.step("Verify catalog screen is displayed after login");
-        Assert.assertTrue(catalogPage.isLoaded(), "Catalog should be visible after successful login");
-        AllureAttachments.attachScreenshot("After valid login");
+        catalogPage.waitForPageLoad();
+        // Then the catalog is displayed confirming successful login
+        Assert.assertTrue(catalogPage.isUserLoggedIn(), "Log out menu should be visible after successful login");
     }
 
     @Test(description = "Valid user shortcut auto-populates and logs in", priority = 2)
     @Story("Valid login")
     @Severity(SeverityLevel.NORMAL)
-    public void testValidUserShortcut() {
-        AllureAttachments.step("Navigate to login with app reset");
-        catalogPage.navigateToLogin();
-        AllureAttachments.step("Tap valid user shortcut");
+    public void testValidLoginWithUserShortcut() {
+        // Given the user is on the login screen
+        // When the user taps the valid user shortcut
         loginPage.tapValidUserShortcut();
-        AllureAttachments.step("Verify username field is populated");
+        // Then the username field is auto-populated
         Assert.assertFalse(loginPage.getUsernameFieldText().isBlank(), "Username field should be populated after tapping shortcut");
-        AllureAttachments.step("Tap login button");
         loginPage.tapLoginButton();
-        AllureAttachments.step("Verify catalog screen is displayed");
-        Assert.assertTrue(catalogPage.isLoaded(), "Catalog should be visible after shortcut login");
-        AllureAttachments.attachScreenshot("After shortcut login");
+        catalogPage.waitForPageLoad();
+        Assert.assertTrue(catalogPage.isUserLoggedIn(), "Log out menu should be visible after successful login");
     }
 
     @Test(description = "Empty username shows validation error", priority = 3)
     @Story("Field validation")
     @Severity(SeverityLevel.NORMAL)
     public void testEmptyUsernameShowsError() {
-        catalogPage.waitForLoad();
-        AllureAttachments.step("Navigate to login without reset");
-        catalogPage.navigateToLogin();
-        AllureAttachments.step("Leave username empty and enter password only");
+        // Given the user is on the login screen
+        // When the user submits with empty username
         loginPage.enterPassword(validPassword);
         loginPage.tapLoginButton();
-
-        AllureAttachments.step("Verify validation error is shown");
+        // Then a validation error is shown
         Assert.assertTrue(loginPage.isErrorDisplayed(), "Error should appear when username is empty");
-
-        AllureAttachments.attachScreenshot("Empty username validation");
     }
 
     @Test(description = "Empty password shows validation error", priority = 4)
     @Story("Field validation")
     @Severity(SeverityLevel.NORMAL)
     public void testEmptyPasswordShowsError() {
-        AllureAttachments.step("Navigate to login without reset");
-        catalogPage.navigateToLogin();
-        AllureAttachments.step("Enter username and leave password empty");
+        // Given the user is on the login screen
+        // When the user submits with empty password
         loginPage.enterUsername(validUsername);
         loginPage.tapLoginButton();
-
-        AllureAttachments.step("Verify validation error is shown");
+        // Then a validation error is shown
         Assert.assertTrue(loginPage.isErrorDisplayed(), "Error should appear when password is empty");
-
-        AllureAttachments.attachScreenshot("Empty password validation");
     }
 
     @Test(description = "Locked user is blocked from logging in", priority = 5)
     @Story("Locked user")
     @Severity(SeverityLevel.CRITICAL)
     public void testLockedUserIsBlocked() {
-        AllureAttachments.step("Navigate to login without reset");
-        catalogPage.navigateToLogin();
-        AllureAttachments.step("Tap locked user shortcut");
+        // Given the user is on the login screen
+        // When the locked user attempts to log in
         loginPage.tapLockedUserShortcut();
-
-        AllureAttachments.step("Enter password and attempt login");
-        loginPage.enterPassword(validPassword);
         loginPage.tapLoginButton();
-
-        AllureAttachments.step("Verify error is shown for locked account");
+        // Then an error is shown and the catalog is not accessible
         Assert.assertTrue(loginPage.isErrorDisplayed(), "Locked user should see an error message");
-
-        AllureAttachments.step("Verify catalog is not accessible");
+        Assert.assertTrue(loginPage.isLoaded(), "Locked user should remain on login screen");
         Assert.assertFalse(catalogPage.isLoaded(), "Locked user should not reach the catalog");
-
-        AllureAttachments.attachScreenshot("Locked user blocked");
-        log.info("Locked user correctly blocked. Error: {}", loginPage.getErrorMessage());
     }
 
     @Test(description = "Logged in user can log out successfully", priority = 6)
     @Story("Logout")
     @Severity(SeverityLevel.CRITICAL)
     public void testLogoutFlow() {
-        AllureAttachments.step("Navigate to login with reset and log in");
-        catalogPage.resetAndNavigateToLogin();
+        // Given a logged in user
         loginPage.login(validUsername, validPassword);
-
-        AllureAttachments.step("Verify logged in — catalog visible");
+        catalogPage.waitForPageLoad();
         Assert.assertTrue(catalogPage.isLoaded(), "Should be on catalog after login");
-
-        AllureAttachments.step("Open menu and tap Log Out");
+        // When user logs out via menu
         catalogPage.tapMenu();
         MenuPage.getInstance().logout();
-
-        AllureAttachments.step("Verify returned to catalog as guest");
-        Assert.assertTrue(loginPage.isLoaded(), "Should be back on login screen after logout");
-
-        AllureAttachments.attachScreenshot("After logout");
+        // Then the login screen is shown confirming logout
+        Assert.assertTrue(loginPage.isLoaded(), "Login screen should be visible after logout");
     }
 }
