@@ -79,6 +79,30 @@ jobs:
           file apks/sauce_demo/MyDemoAppAndroid.apk
           ls -lh apks/sauce_demo/
 
+      # AVD cache so Android SDK is already set up by the runner before we try to cache AVD paths
+      - name: Cache AVD
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-34-${{ runner.os }}-v1
+
+      - name: Create AVD if not cached
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: Nexus 6
+          avd-name: mobilytix_emulator
+          force-avd-creation: false
+          emulator-options: -no-snapshot -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect
+          disable-animations: true
+          script: echo "AVD created and cached"
+
       - name: Run tests on Android Emulator
         uses: reactivecircus/android-emulator-runner@v2
         env:
@@ -86,8 +110,8 @@ jobs:
           APPIUM_AUTO_START: "true"
           DEVICE_UDID: "emulator-5554"
           APPIUM_LOG_LEVEL: "warn"
-          PAGE_LOAD_TIMEOUT: "45"
-          EXPLICIT_TIMEOUT: "30"
+          EXPLICIT_TIMEOUT: "45"
+          PAGE_LOAD_TIMEOUT: "60"
           SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME }}
           SAUCE_PASSWORD: ${{ secrets.SAUCE_PASSWORD }}
           SAUCE_LOCKED_USERNAME: ${{ secrets.SAUCE_LOCKED_USERNAME }}
@@ -99,6 +123,9 @@ jobs:
           avd-name: mobilytix_emulator
           emulator-options: -no-snapshot -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect
           disable-animations: true
+          pre-emulator-launch-script: |
+            echo "Waiting for emulator to fully settle..."
+            sleep 10
           script: ./mvnw clean test -Dtestng.suite=testng.xml
 
       - name: Upload Allure results

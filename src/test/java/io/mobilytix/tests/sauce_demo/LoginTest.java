@@ -47,7 +47,7 @@ public class LoginTest extends BaseTest {
         loginPage.waitForPageLoad();
     }
 
-    @Test(description = "Valid user can log in successfully", priority = 1)
+    @Test(description = "Valid user can log in successfully")
     @Story("Valid login")
     @Severity(SeverityLevel.BLOCKER)
     public void testValidLogin() {
@@ -59,7 +59,7 @@ public class LoginTest extends BaseTest {
         Assert.assertTrue(catalogPage.isUserLoggedIn(), "Log out menu should be visible after successful login");
     }
 
-    @Test(description = "Valid user shortcut auto-populates and logs in", priority = 2)
+    @Test(description = "Valid user shortcut auto-populates and logs in")
     @Story("Valid login")
     @Severity(SeverityLevel.NORMAL)
     public void testValidLoginWithUserShortcut() {
@@ -73,7 +73,7 @@ public class LoginTest extends BaseTest {
         Assert.assertTrue(catalogPage.isUserLoggedIn(), "Log out menu should be visible after successful login");
     }
 
-    @Test(description = "Empty username shows validation error", priority = 3)
+    @Test(description = "Empty username shows validation error")
     @Story("Field validation")
     @Severity(SeverityLevel.NORMAL)
     public void testEmptyUsernameShowsError() {
@@ -85,7 +85,7 @@ public class LoginTest extends BaseTest {
         Assert.assertTrue(loginPage.isErrorDisplayed(), "Error should appear when username is empty");
     }
 
-    @Test(description = "Empty password shows validation error", priority = 4)
+    @Test(description = "Empty password shows validation error")
     @Story("Field validation")
     @Severity(SeverityLevel.NORMAL)
     public void testEmptyPasswordShowsError() {
@@ -97,7 +97,7 @@ public class LoginTest extends BaseTest {
         Assert.assertTrue(loginPage.isErrorDisplayed(), "Error should appear when password is empty");
     }
 
-    @Test(description = "Locked user is blocked from logging in", priority = 5)
+    @Test(description = "Locked user is blocked from logging in")
     @Story("Locked user")
     @Severity(SeverityLevel.CRITICAL)
     public void testLockedUserIsBlocked() {
@@ -111,7 +111,7 @@ public class LoginTest extends BaseTest {
         Assert.assertFalse(catalogPage.isLoaded(), "Locked user should not reach the catalog");
     }
 
-    @Test(description = "Logged in user can log out successfully", priority = 6)
+    @Test(description = "Logged in user can log out successfully")
     @Story("Logout")
     @Severity(SeverityLevel.CRITICAL)
     public void testLogoutFlow() {
