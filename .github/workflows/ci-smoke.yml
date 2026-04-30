@@ -122,7 +122,4 @@ jobs:
           force-avd-creation: false
           emulator-options: -no-snapshot -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-metrics
           disable-animations: true
-          script: ./mvnw test -Dtest=LoginTest#testValidLogin          force-avd-creation: false
-          emulator-options: -no-snapshot -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-metrics
-          disable-animations: true
           script: ./mvnw test -Dtest=LoginTest#testValidLogin
