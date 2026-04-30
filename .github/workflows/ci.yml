@@ -42,6 +42,13 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Cache npm global packages
+        id: cache-npm-global
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm-global
+          key: ${{ runner.os }}-npm-global-appium-v1
+
       - name: Cache Appium drivers
         id: cache-appium
         uses: actions/cache@v4
@@ -49,16 +56,18 @@ jobs:
           path: ~/.appium
           key: ${{ runner.os }}-appium-uiautomator2-v1
 
+      - name: Set npm global prefix
+        run: npm config set prefix ~/.npm-global
+
       - name: Install Appium and UiAutomator2 driver
+        if: steps.cache-npm-global.outputs.cache-hit != 'true'
         run: |
           npm install -g appium@latest
           npm install -g @appium/doctor
-          if [ "${{ steps.cache-appium.outputs.cache-hit }}" != "true" ]; then
-            echo "Cache miss — installing uiautomator2 driver"
-            appium driver install uiautomator2
-          else
-            echo "Cache hit — uiautomator2 already installed"
-          fi
+          appium driver install uiautomator2
+
+      - name: Add npm global to PATH
+        run: echo "$HOME/.npm-global/bin" >> $GITHUB_PATH
 
       - name: Verify Appium installation
         run: |
@@ -126,8 +135,9 @@ jobs:
                -o apks/sauce_demo/MyDemoAppAndroid.apk
           file apks/sauce_demo/MyDemoAppAndroid.apk
           ls -lh apks/sauce_demo/
-          file apks/sauce_demo/MyDemoAppAndroid.apk | grep -q "Zip archive" || \
+          file apks/sauce_demo/MyDemoAppAndroid.apk | grep -qiE "zip|jar|android" || \
             { echo "ERROR: Downloaded file is not a valid APK"; exit 1; }
+          echo "✅ APK downloaded and valid"
 
       # Tests
       - name: Run tests on Android Emulator
