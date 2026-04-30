@@ -1,20 +1,11 @@
 name: CI Smoke Test
 
 on:
-  workflow_dispatch:
-    inputs:
-      scenario:
-        description: 'APK download scenario'
-        required: true
-        default: 'full_url'
-        type: choice
-        options:
-          - full_url        # uses download_url from config.yaml
-          - constructed_url # blanks download_url — constructs from parts
-
+  push:
+    branches: [ fix_resolve_flaky_tests ]
 jobs:
   smoke:
-    name: Smoke — ${{ github.event.inputs.scenario }}
+    name: Smoke — APK download verification
     runs-on: ubuntu-latest
 
     steps:
@@ -60,7 +51,7 @@ jobs:
       - name: Resolve APK URL
         id: apk
         run: |
-          SCENARIO="${{ github.event.inputs.scenario }}"
+          SCENARIO="${{ github.event.inputs.scenario || 'full_url' }}"
 
           VERSION=$(yq -r '.apps.sauce_demo.apk_source.version' \
             src/main/resources/config/config.yml)
