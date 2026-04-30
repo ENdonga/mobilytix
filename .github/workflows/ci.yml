@@ -42,32 +42,11 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Cache npm global packages
-        id: cache-npm-global
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm-global
-          key: ${{ runner.os }}-npm-global-appium-v1
-
-      - name: Cache Appium drivers
-        id: cache-appium
-        uses: actions/cache@v4
-        with:
-          path: ~/.appium
-          key: ${{ runner.os }}-appium-uiautomator2-v1
-
-      - name: Set npm global prefix
-        run: npm config set prefix ~/.npm-global
-
       - name: Install Appium and UiAutomator2 driver
-        if: steps.cache-npm-global.outputs.cache-hit != 'true'
         run: |
           npm install -g appium@latest
           npm install -g @appium/doctor
-          appium driver install uiautomator2
-
-      - name: Add npm global to PATH
-        run: echo "$HOME/.npm-global/bin" >> $GITHUB_PATH
+          appium driver install uiautomator2 || appium driver update uiautomator2
 
       - name: Verify Appium installation
         run: |
