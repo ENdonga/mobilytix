@@ -62,7 +62,12 @@ jobs:
         run: |
           npm install -g appium@latest
           npm install -g @appium/doctor
-          appium driver install uiautomator2
+          # Install driver only if not already present from driver cache
+          if appium driver list --installed | grep -q "uiautomator2"; then
+            echo "uiautomator2 already installed from driver cache — skipping"
+          else
+            appium driver install uiautomator2
+          fi
 
       # -----------------------------------------------------------------------
       # APK download — test both scenarios
