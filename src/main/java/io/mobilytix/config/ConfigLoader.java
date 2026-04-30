@@ -91,6 +91,12 @@ public class ConfigLoader {
     private static final String PROP_PAGE_LOAD_TIMEOUT = "page.load.timeout";
     private static final String ENV_PAGE_LOAD_TIMEOUT = "PAGE_LOAD_TIMEOUT";
 
+    // APK source overrides — apply per app after loading AppConfig
+    private static final String PROP_APK_DOWNLOAD_URL = "apk_source.download_url";
+    private static final String ENV_APK_DOWNLOAD_URL = "APK_FULL_URL";
+    private static final String PROP_APK_VERSION = "apk_source.version";
+    private static final String ENV_APK_VERSION = "APK_VERSION";
+
     private ConfigLoader() {
         mapper = new ObjectMapper(new YAMLFactory());
         // Step 1 — read the config.yml file. Failure here means: file not found or invalid YAML
@@ -155,8 +161,23 @@ public class ConfigLoader {
             if (apps == null || !apps.containsKey(appKey)) {
                 throw new ConfigException(appKey, "not found under apps: in config.yaml. " + "Available keys: " + (apps != null ? apps.keySet() : "none"));
             }
-//            String json = mapper.writeValueAsString(apps.get(appKey));
             AppConfig config = mapper.convertValue(apps.get(appKey), AppConfig.class);
+            // Apply APK source overrides
+            if (config.getApkSource() != null) {
+                String urlOverride = resolveOverride(PROP_APK_DOWNLOAD_URL, ENV_APK_DOWNLOAD_URL);
+                if (urlOverride != null && !urlOverride.equals(config.getApkSource().getDownloadUrl())) {
+                    log.info("APK download URL overridden (source: {})", getOverrideSource(PROP_APK_DOWNLOAD_URL, ENV_APK_DOWNLOAD_URL));
+                    config.getApkSource().setDownloadUrl(urlOverride);
+                }
+
+                String versionOverride = resolveOverride(PROP_APK_VERSION, ENV_APK_VERSION);
+                if (versionOverride != null && !versionOverride.equals(config.getApkSource().getVersion())) {
+                    log.info("APK version overridden: {} → {} (source: {})",
+                            config.getApkSource().getVersion(), versionOverride,
+                            getOverrideSource(PROP_APK_VERSION, ENV_APK_VERSION));
+                    config.getApkSource().setVersion(versionOverride);
+                }
+            }
             log.debug("AppConfig loaded for key '{}' — app: {}", appKey, config.getAppName());
             return config;
         } catch (ConfigException e) {

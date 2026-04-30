@@ -59,6 +59,14 @@ apps:
     requires_auth: false
     auth_type: "basic"
     otp_source: ""
+    # Controls how CI downloads and caches the APK for this app.
+    # Local runs use apk_path above — these fields are CI/download only.
+    apk_source:
+      base_url: "https://github.com/saucelabs/my-demo-app-android/releases/download"
+      version: "2.2.0"
+      build: "25"
+      filename: "mda-{version}-{build}.apk"
+      download_url: "https://github.com/saucelabs/my-demo-app-android/releases/download/2.2.0/mda-2.2.0-25.apk"
 
 reporting:
   extent:

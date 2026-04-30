@@ -26,4 +26,6 @@ public class AppConfig {
     private String authType;
     @JsonProperty("otp_source")
     private String otpSource;
+    @JsonProperty("apk_source")
+    private ApkSource apkSource;
 }

@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Setup
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -29,7 +30,7 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-maven-
 
-      - name: Enable KVM
+      - name: Enable KVM for emulator hardware acceleration
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
             | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -56,7 +57,7 @@ jobs:
             echo "Cache miss — installing uiautomator2 driver"
             appium driver install uiautomator2
           else
-            echo "Cache hit — uiautomator2 already installed, skipping"
+            echo "Cache hit — uiautomator2 already installed"
           fi
 
       - name: Verify Appium installation
@@ -66,43 +67,69 @@ jobs:
           appium driver list --installed
         continue-on-error: true
 
-      - name: Download Sauce Labs Demo APK
+      # APK — read config, cache, download only on cache miss
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-yq-v1
+
+      - name: Install yq
+        run: pip install yq --quiet
+
+      - name: Read APK config from config.yaml
+        id: apk-config
+        run: |
+          DOWNLOAD_URL=$(yq -r '.apps.sauce_demo.apk_source.download_url // ""' \
+            src/main/resources/config/config.yml)
+          VERSION=$(yq -r '.apps.sauce_demo.apk_source.version' \
+            src/main/resources/config/config.yml)
+          BUILD=$(yq -r '.apps.sauce_demo.apk_source.build' \
+            src/main/resources/config/config.yml)
+          BASE_URL=$(yq -r '.apps.sauce_demo.apk_source.base_url' \
+            src/main/resources/config/config.yml)
+          FILENAME=$(yq -r '.apps.sauce_demo.apk_source.filename' \
+            src/main/resources/config/config.yml)
+
+          # If download_url is blank — construct from parts
+          # mirrors exactly what ApkSource.resolveDownloadUrl() does in Java
+          if [ -z "$DOWNLOAD_URL" ] || [ "$DOWNLOAD_URL" = "null" ]; then
+            RESOLVED_FILENAME=$(echo "$FILENAME" \
+              | sed "s/{version}/$VERSION/g" \
+              | sed "s/{build}/$BUILD/g")
+            DOWNLOAD_URL="$BASE_URL/$VERSION/$RESOLVED_FILENAME"
+            echo "download_url blank — constructed from parts: $DOWNLOAD_URL"
+          else
+            echo "Using download_url from config: $DOWNLOAD_URL"
+          fi
+
+          CACHE_KEY="$VERSION-$BUILD"
+          echo "apk_url=$DOWNLOAD_URL"    >> $GITHUB_OUTPUT
+          echo "apk_version=$CACHE_KEY"   >> $GITHUB_OUTPUT
+          echo "APK URL:   $DOWNLOAD_URL"
+          echo "Cache key: $CACHE_KEY"
+
+      - name: Cache APK
+        id: cache-apk
+        uses: actions/cache@v4
+        with:
+          path: apks/sauce_demo/MyDemoAppAndroid.apk
+          key: apk-sauce-demo-${{ steps.apk-config.outputs.apk_version }}-${{ runner.os }}
+
+      - name: Download APK
+        if: steps.cache-apk.outputs.cache-hit != 'true'
         run: |
           mkdir -p apks/sauce_demo
-          APK_URL=$(curl -s https://api.github.com/repos/saucelabs/my-demo-app-android/releases/latest \
-            | grep "browser_download_url" \
-            | grep "\.apk" \
-            | grep -v "androidTest" \
-            | cut -d '"' -f 4)
-          echo "Downloading from: $APK_URL"
-          curl -L "$APK_URL" -o apks/sauce_demo/MyDemoAppAndroid.apk
+          echo "Cache miss — downloading APK"
+          echo "URL: ${{ steps.apk-config.outputs.apk_url }}"
+          curl -L "${{ steps.apk-config.outputs.apk_url }}" \
+               -o apks/sauce_demo/MyDemoAppAndroid.apk
           file apks/sauce_demo/MyDemoAppAndroid.apk
           ls -lh apks/sauce_demo/
+          file apks/sauce_demo/MyDemoAppAndroid.apk | grep -q "Zip archive" || \
+            { echo "ERROR: Downloaded file is not a valid APK"; exit 1; }
 
-      # AVD cache so Android SDK is already set up by the runner before we try to cache AVD paths
-      - name: Cache AVD
-        uses: actions/cache@v4
-        id: avd-cache
-        with:
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-          key: avd-34-${{ runner.os }}-v1
-
-      - name: Create AVD if not cached
-        if: steps.avd-cache.outputs.cache-hit != 'true'
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 34
-          target: google_apis
-          arch: x86_64
-          profile: Nexus 6
-          avd-name: mobilytix_emulator
-          force-avd-creation: false
-          emulator-options: -no-snapshot -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect
-          disable-animations: true
-          script: echo "AVD created and cached"
-
+      # Tests
       - name: Run tests on Android Emulator
         uses: reactivecircus/android-emulator-runner@v2
         env:
@@ -115,19 +142,20 @@ jobs:
           SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME }}
           SAUCE_PASSWORD: ${{ secrets.SAUCE_PASSWORD }}
           SAUCE_LOCKED_USERNAME: ${{ secrets.SAUCE_LOCKED_USERNAME }}
+          SAUCE_LABS_USERNAME: ${{ secrets.SAUCE_LABS_USERNAME }}
+          SAUCE_LABS_ACCESS_KEY: ${{ secrets.SAUCE_LABS_ACCESS_KEY }}
         with:
           api-level: 34
           target: google_apis
           arch: x86_64
           profile: Nexus 6
           avd-name: mobilytix_emulator
-          emulator-options: -no-snapshot -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect
+          force-avd-creation: false
+          emulator-options: -no-snapshot -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-metrics
           disable-animations: true
-          pre-emulator-launch-script: |
-            echo "Waiting for emulator to fully settle..."
-            sleep 10
           script: ./mvnw clean test -Dtestng.suite=testng.xml
 
+      # Reports — always upload even if tests failed
       - name: Upload Allure results
         if: always()
         uses: actions/upload-artifact@v4
@@ -152,6 +180,7 @@ jobs:
           path: target/logs/
           retention-days: 30
 
+  # Report generation — runs after test job completes
   report:
     name: Generate Allure report
     runs-on: ubuntu-latest
@@ -200,3 +229,31 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: target/site/allure-maven-plugin/
+
+      # -----------------------------------------------------------------------
+      # Optional: Sauce Labs cloud execution
+      # Uncomment and comment out the emulator runner step above to switch.
+      # Add SAUCE_LABS_USERNAME and SAUCE_LABS_ACCESS_KEY to GitHub Secrets.
+      # -----------------------------------------------------------------------
+      #- name: Upload APK to Sauce Labs storage
+      #  env:
+      #    SAUCE_LABS_USERNAME:   ${{ secrets.SAUCE_LABS_USERNAME }}
+      #    SAUCE_LABS_ACCESS_KEY: ${{ secrets.SAUCE_LABS_ACCESS_KEY }}
+      #  run: |
+      #    curl -u "$SAUCE_LABS_USERNAME:$SAUCE_LABS_ACCESS_KEY" \
+      #      -X POST "https://api.eu-central-1.saucelabs.com/v1/storage/upload" \
+      #      -H "Content-Type: multipart/form-data" \
+      #      -F "payload=@apks/sauce_demo/MyDemoAppAndroid.apk" \
+      #      -F "name=MyDemoAppAndroid.apk" \
+      #      --fail-with-body
+      #
+      #- name: Run tests on Sauce Labs
+      #  env:
+      #    EXECUTION_MODE:        sauce_labs
+      #    APPIUM_AUTO_START:     "false"
+      #    SAUCE_LABS_USERNAME:   ${{ secrets.SAUCE_LABS_USERNAME }}
+      #    SAUCE_LABS_ACCESS_KEY: ${{ secrets.SAUCE_LABS_ACCESS_KEY }}
+      #    SAUCE_USERNAME:        ${{ secrets.SAUCE_USERNAME }}
+      #    SAUCE_PASSWORD:        ${{ secrets.SAUCE_PASSWORD }}
+      #    SAUCE_LOCKED_USERNAME: ${{ secrets.SAUCE_LOCKED_USERNAME }}
+      #  run: ./mvnw clean test -Dtestng.suite=testng.xml
