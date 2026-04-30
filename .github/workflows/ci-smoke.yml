@@ -87,10 +87,15 @@ jobs:
           mkdir -p apks/sauce_demo
           curl -L "${{ steps.apk.outputs.apk_url }}" \
                -o apks/sauce_demo/MyDemoAppAndroid.apk
-          file apks/sauce_demo/MyDemoAppAndroid.apk | grep -q "Zip archive" || \
+
+          # Show what file command returns for debugging
+          file apks/sauce_demo/MyDemoAppAndroid.apk
+          ls -lh apks/sauce_demo/
+
+          # APKs are ZIP files — accept any ZIP-based format description
+          file apks/sauce_demo/MyDemoAppAndroid.apk | grep -qiE "zip|jar|android" || \
             { echo "ERROR: Not a valid APK"; exit 1; }
           echo "✅ APK downloaded and valid"
-          ls -lh apks/sauce_demo/
 
       # -----------------------------------------------------------------------
       # One smoke test — fastest possible verification the APK works
@@ -115,6 +120,9 @@ jobs:
           profile: Nexus 6
           avd-name: mobilytix_emulator
           force-avd-creation: false
+          emulator-options: -no-snapshot -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-metrics
+          disable-animations: true
+          script: ./mvnw test -Dtest=LoginTest#testValidLogin          force-avd-creation: false
           emulator-options: -no-snapshot -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-metrics
           disable-animations: true
           script: ./mvnw test -Dtest=LoginTest#testValidLogin
