@@ -3,10 +3,11 @@
 This guide explains how to override `config.yaml` values without editing
 the file directly. This is useful when:
 
-- Your device udid differs from the team default
+- Your device UDID differs from the team default
 - You are running on a physical device instead of an emulator
+- You want to run tests on Sauce Labs cloud instead of a local emulator
 - A CI pipeline needs to inject device or credential values per job
-- You want to test against a different app version without changing config
+- You want to test against a different APK version without changing config
 
 ---
 
@@ -23,13 +24,18 @@ Values are resolved in this priority order — highest wins:
 The framework checks each source in order and stops at the first match.
 `config.yaml` is always the fallback default.
 
+`applyOverrides()` is called once in `BaseTest.globalSetup()` after
+`EnvLoader.load()` — this ensures `.env` values are available before
+any override resolution runs.
+
 ---
 
 ## The `.env` file
 
 ### What it is
 
-A plain text file at the project root named `.env`. It holds local machine-specific overrides that you never want to commit to Git.
+A plain text file at the project root named `.env`. It holds local
+machine-specific overrides that you never want to commit to Git.
 
 `.env` is in `.gitignore` — it will never be accidentally committed.
 `.env.example` is committed and documents every available override key.
@@ -58,41 +64,129 @@ ANOTHER_KEY=another value
 
 ---
 
-## Available override keys
+## Complete override key reference
+
+### Execution mode
+
+| Key | config.yaml equivalent | Values | Default |
+|---|---|---|---|
+| `EXECUTION_MODE` | `framework.execution_mode` | `local` \| `sauce_labs` | `local` |
+
+```bash
+# Run tests on Sauce Labs cloud instead of local emulator
+EXECUTION_MODE=sauce_labs
+```
 
 ### Device
 
-| Key                       | config.yaml equivalent    | Example                      |
-|---------------------------|---------------------------|------------------------------|
-| `DEVICE_UDID`             | `device.udid`             | `DEVICE_UDID=emulator-5558`  |
+| Key | config.yaml equivalent | Example |
+|---|---|---|
+| `DEVICE_UDID` | `device.udid` | `DEVICE_UDID=emulator-5558` |
 | `DEVICE_PLATFORM_VERSION` | `device.platform_version` | `DEVICE_PLATFORM_VERSION=13` |
+| `DEVICE_NO_RESET` | `device.no_reset` | `DEVICE_NO_RESET=true` |
+| `DEVICE_FULL_RESET` | `device.full_reset` | `DEVICE_FULL_RESET=true` |
 
 ### Appium server
 
-| Key           | config.yaml equivalent  | Example                     |
-|---------------|-------------------------|-----------------------------|
+| Key | config.yaml equivalent | Example |
+|---|---|---|
 | `APPIUM_HOST` | `framework.appium.host` | `APPIUM_HOST=192.168.1.100` |
-| `APPIUM_PORT` | `framework.appium.port` | `APPIUM_PORT=4724`          |
+| `APPIUM_PORT` | `framework.appium.port` | `APPIUM_PORT=4724` |
+| `APPIUM_AUTO_START` | `framework.appium.auto_start` | `APPIUM_AUTO_START=false` |
+| `APPIUM_LOG_LEVEL` | `framework.appium.log_level` | `APPIUM_LOG_LEVEL=warn` |
 
-### Authentication
+```bash
+# Silence Appium HTTP traffic logs in CI — set to warn
+APPIUM_LOG_LEVEL=warn
 
-| Key             | Used in                          | Example                         |
-|-----------------|----------------------------------|---------------------------------|
-| `OTP_API_TOKEN` | `OtpResolver.resolveFromEmail()` | `OTP_API_TOKEN=abc123`          |
-| `SSO_USERNAME`  | `SsoHandler`                     | `SSO_USERNAME=user@example.com` |
-| `SSO_PASSWORD`  | `SsoHandler`                     | `SSO_PASSWORD=secret`           |
+# Disable auto start when Appium is already running externally
+APPIUM_AUTO_START=false
+```
 
-> Authentication credentials should always come from `.env` or CI
-> environment variables — never hardcode them in config.yaml or test code.
+### Timeouts
+
+| Key | config.yaml equivalent | Example |
+|---|---|---|
+| `EXPLICIT_TIMEOUT` | `framework.timeouts.explicit` | `EXPLICIT_TIMEOUT=30` |
+| `PAGE_LOAD_TIMEOUT` | `framework.timeouts.page_load` | `PAGE_LOAD_TIMEOUT=45` |
+
+```bash
+# Increase timeouts for slow CI emulators
+EXPLICIT_TIMEOUT=30
+PAGE_LOAD_TIMEOUT=45
+```
+
+### Reporting
+
+| Key | config.yaml equivalent | Example |
+|---|---|---|
+| `EXTENT_OUTPUT_PATH` | `reporting.extent.output_path` | `EXTENT_OUTPUT_PATH=target/my-report.html` |
+| `SCREENSHOT_ON_FAILURE` | `reporting.screenshots.on_failure` | `SCREENSHOT_ON_FAILURE=true` |
+| `SCREENSHOT_ON_PASS` | `reporting.screenshots.on_pass` | `SCREENSHOT_ON_PASS=false` |
+| `SCREEN_RECORDING_ENABLED` | `reporting.screen_recording.enabled` | `SCREEN_RECORDING_ENABLED=true` |
+
+### App test credentials
+
+These are the credentials used by test cases to log in to the Sauce Labs
+Demo App. They are not Sauce Labs account credentials.
+
+| Key | Used in | Example |
+|---|---|---|
+| `SAUCE_USERNAME` | `LoginTest`, `CatalogTest` | `SAUCE_USERNAME=bod@example.com` |
+| `SAUCE_PASSWORD` | `LoginTest`, `CatalogTest` | `SAUCE_PASSWORD=10203040` |
+| `SAUCE_LOCKED_USERNAME` | `LoginTest` | `SAUCE_LOCKED_USERNAME=alice@example.com` |
+
+> These should always come from `.env` or CI environment variables —
+> never hardcode credentials in test code or config.yaml.
+
+### Sauce Labs cloud credentials
+
+Only needed when `EXECUTION_MODE=sauce_labs`.
+Get these from your Sauce Labs account at **Account → User Settings**.
+
+| Key | Description |
+|---|---|
+| `SAUCE_LABS_USERNAME` | Your Sauce Labs account username |
+| `SAUCE_LABS_ACCESS_KEY` | Your Sauce Labs access key |
+
+```bash
+# Switch to cloud execution
+EXECUTION_MODE=sauce_labs
+APPIUM_AUTO_START=false
+SAUCE_LABS_USERNAME=your_username
+SAUCE_LABS_ACCESS_KEY=your_access_key
+```
+
+### APK source overrides
+
+Override which APK is downloaded in CI without changing `config.yaml`.
+Useful when testing against an unreleased version or a private repository.
+
+| Key | config.yaml equivalent | Example |
+|---|---|---|
+| `APK_DOWNLOAD_URL` | `apps.sauce_demo.apk_source.download_url` | Full APK URL |
+| `APK_VERSION` | `apps.sauce_demo.apk_source.version` | `APK_VERSION=2.3.0` |
+
+```bash
+# Test against a newer version locally without changing config.yaml
+APK_DOWNLOAD_URL=https://github.com/saucelabs/my-demo-app-android/releases/download/2.3.0/mda-2.3.0-26.apk
+APK_VERSION=2.3.0
+```
+
+### Authentication — OTP and SSO
+
+| Key | Used in | Example |
+|---|---|---|
+| `OTP_API_TOKEN` | `OtpResolver.resolveFromEmail()` | `OTP_API_TOKEN=abc123` |
+| `SSO_USERNAME` | `SsoHandler` | `SSO_USERNAME=user@example.com` |
+| `SSO_PASSWORD` | `SsoHandler` | `SSO_PASSWORD=secret` |
 
 ---
 
 ## Command line overrides
 
-Use `-D` flags with `./mvnw` to override values per run.
+Use `-D` flags with `./mvnw` to override values for a single run.
 These take the highest priority and override both `.env` and `config.yaml`.
-
-### Override device udid
 
 ```bash
 # Run against a specific emulator
@@ -100,77 +194,52 @@ These take the highest priority and override both `.env` and `config.yaml`.
 
 # Run against a physical device
 ./mvnw clean test -Ddevice.udid=R58M123ABCD
-```
 
-### Override Appium server
+# Run on Sauce Labs for one run without editing .env
+./mvnw clean test -Dexecution_mode=sauce_labs
 
-```bash
-# Run against a remote Appium server
-./mvnw clean test -Dappium.host=192.168.1.100 -Dappium.port=4724
-```
+# Increase timeouts for a slow device
+./mvnw clean test -Dexplicit.timeout=30 -Dpage.load.timeout=45
 
-### Combine multiple overrides
-
-```bash
+# Combine multiple overrides
 ./mvnw clean test \
   -Ddevice.udid=emulator-5558 \
   -Dappium.port=4724 \
   -Dtestng.suite=testng-parallel.xml
 ```
 
-### Run a specific test suite
+### Run a specific test
 
 ```bash
-# Sequential (default)
+# All tests (default suite)
 ./mvnw clean test
-
-# Parallel
-./mvnw clean test -Dtestng.suite=testng-parallel.xml
 
 # Specific test class
-./mvnw clean test -Dtest=MainPageTest
+./mvnw test -Dtest=LoginTest
 
 # Specific test method
-./mvnw clean test -Dtest=MainPageTest#testMainScreenLoads
+./mvnw test -Dtest="LoginTest#testValidLogin"
+
+# Parallel suite
+./mvnw clean test -Dtestng.suite=testng-parallel.xml
 ```
 
 ---
 
-## Using `.env` and command line together
+## When to use each source
 
-They are designed to complement each other:
-
-| Scenario                                 | Recommended approach                                             |
-|------------------------------------------|------------------------------------------------------------------|
-| Daily local development                  | Set `DEVICE_UDID` in `.env` once and forget it                   |
-| Running against a different device today | Use `-Ddevice.udid=xxx` for that one run                         |
-| CI pipeline                              | Set environment variables in the CI job config, no `.env` needed |
-| Debugging a specific test                | Use `-Dtest=ClassName#methodName`                                |
-
-### Example daily workflow
-
-```bash
-# .env set up once on your machine:
-# DEVICE_UDID=emulator-5558
-
-# Normal run — uses .env value automatically
-./mvnw clean test
-
-# One-off run against a physical device — command line wins over .env
-./mvnw clean test -Ddevice.udid=R58M123ABCD
-
-# Back to normal — .env still has emulator-5558, no changes needed
-./mvnw clean test
-```
+| Scenario | Recommended approach |
+|---|---|
+| Daily local development | Set `DEVICE_UDID` in `.env` once and forget it |
+| Running against a different device today | Use `-Ddevice.udid=xxx` for that one run |
+| Switching to Sauce Labs for a session | Set `EXECUTION_MODE=sauce_labs` in `.env` |
+| CI pipeline | Set environment variables in the workflow — no `.env` needed |
+| Testing a specific APK version once | Use `APK_DOWNLOAD_URL` in `.env` temporarily |
+| Debugging a flaky test | Use `-Dexplicit.timeout=45` for that run |
 
 ---
 
-## `.env.example` — reference file
-
-The `.env.example` file at the project root is the authoritative list of
-every supported override key. It is committed to Git and kept up to date.
-
-Copy it to `.env` and uncomment the lines you need:
+## `.env.example` — complete reference
 
 ```bash
 # ============================================================
@@ -179,69 +248,108 @@ Copy it to `.env` and uncomment the lines you need:
 # .env is in .gitignore and will never be committed.
 # ============================================================
 
+# ---- Execution mode ----------------------------------------
+# Switch between local emulator and Sauce Labs cloud execution
+# EXECUTION_MODE=local               # local | sauce_labs
+
 # ---- Device ------------------------------------------------
-
-# Override the device udid from config.yaml.
-# Run `adb devices` to find your device serial.
 # DEVICE_UDID=emulator-5554
-
-# Override platform version if your device differs from config.
 # DEVICE_PLATFORM_VERSION=14
+# DEVICE_NO_RESET=false
+# DEVICE_FULL_RESET=false
 
 # ---- Appium server -----------------------------------------
-
-# Override Appium host — useful when running against a remote server.
 # APPIUM_HOST=127.0.0.1
-
-# Override Appium port — useful when running multiple Appium instances.
 # APPIUM_PORT=4723
+# APPIUM_AUTO_START=true
+# APPIUM_LOG_LEVEL=warn              # warn for CI, info for local
 
-# ---- Authentication ----------------------------------------
+# ---- Timeouts (seconds) ------------------------------------
+# EXPLICIT_TIMEOUT=15
+# PAGE_LOAD_TIMEOUT=30
 
-# API token for email-based OTP resolution (e.g. MailSlurp, Mailinator).
+# ---- Reporting ---------------------------------------------
+# EXTENT_OUTPUT_PATH=target/extent-reports/mobilytix-report.html
+# SCREENSHOT_ON_FAILURE=true
+# SCREENSHOT_ON_PASS=false
+# SCREEN_RECORDING_ENABLED=false
+
+# ---- Sauce Labs Demo App test credentials ------------------
+# These are app login credentials — NOT Sauce Labs account credentials
+SAUCE_USERNAME=bod@example.com
+SAUCE_PASSWORD=10203040
+SAUCE_LOCKED_USERNAME=alice@example.com
+
+# ---- Sauce Labs cloud execution ----------------------------
+# From saucelabs.com → Account → User Settings
+# Only needed when EXECUTION_MODE=sauce_labs
+# SAUCE_LABS_USERNAME=your_sauce_labs_username
+# SAUCE_LABS_ACCESS_KEY=your_sauce_labs_access_key
+
+# ---- APK source override -----------------------------------
+# Override to test against a different version without changing config.yaml
+# APK_DOWNLOAD_URL=https://github.com/your-org/your-app/releases/download/1.0.0/app.apk
+# APK_VERSION=1.0.0
+
+# ---- OTP / SSO ---------------------------------------------
 # OTP_API_TOKEN=your_token_here
-
-# SSO credentials — never hardcode these in config.yaml or test code.
 # SSO_USERNAME=user@example.com
 # SSO_PASSWORD=your_password_here
 ```
 
 ---
 
-## Adding a new override key
+## CI configuration
 
-When you need to make a new config value overridable:
+In CI there is no `.env` file — set environment variables directly in the
+workflow. GitHub Actions reads them as system environment variables which
+`resolveOverride()` picks up from source 3 in the priority chain.
 
-1. Add the key to `.env.example` with a comment explaining what it does
-2. Add the resolution logic to `ConfigLoader` following the same pattern
-   as `resolveUdidOverride()` — check system property first, then env var
-3. Update this guide with the new key in the relevant table
-4. Commit `.env.example` and this guide — never commit `.env`
+```yaml
+# In .github/workflows/ci.yml
+- name: Run tests on Android Emulator
+  uses: reactivecircus/android-emulator-runner@v2
+  env:
+    EXECUTION_MODE: "local"
+    APPIUM_AUTO_START: "true"
+    DEVICE_UDID: "emulator-5554"
+    APPIUM_LOG_LEVEL: "warn"
+    EXPLICIT_TIMEOUT: "45"
+    PAGE_LOAD_TIMEOUT: "60"
+    SAUCE_USERNAME:        ${{ secrets.SAUCE_USERNAME }}
+    SAUCE_PASSWORD:        ${{ secrets.SAUCE_PASSWORD }}
+    SAUCE_LOCKED_USERNAME: ${{ secrets.SAUCE_LOCKED_USERNAME }}
+```
+
+Sensitive values like credentials should always be stored in
+**GitHub Secrets** and injected as environment variables — never
+hardcoded in the workflow file.
 
 ---
 
-## CI configuration (GitHub Actions example)
+## Adding a new override key
 
-In CI you do not use a `.env` file — set environment variables directly
-in the workflow:
+When you need to make a new config value overridable follow this pattern:
 
-```yaml
-- name: Run tests
-  env:
-    DEVICE_UDID: emulator-5554
-    OTP_API_TOKEN: ${{ secrets.OTP_API_TOKEN }}
-  run: ./mvnw clean test
+1. Add the prop key and env key constants to `ConfigLoader`:
+
+```java
+private static final String PROP_MY_KEY = "my.key";       // -Dmy.key=value
+private static final String ENV_MY_KEY  = "MY_KEY";        // MY_KEY=value in .env
 ```
 
-Or use `-D` flags:
+2. Add the resolution block to `resolveAllOverrides()`:
 
-```yaml
-- name: Run tests
-  run: |
-    ./mvnw clean test \
-      -Ddevice.udid=emulator-5554 \
-      -Dtestng.suite=testng-parallel.xml
+```java
+String myOverride = resolveOverride(PROP_MY_KEY, ENV_MY_KEY);
+if (myOverride != null && !myOverride.equals(currentValue)) {
+    log.info("My key overridden: {} → {} (source: {})",
+            currentValue, myOverride,
+            getOverrideSource(PROP_MY_KEY, ENV_MY_KEY));
+    // apply the override to the config model
+}
 ```
 
-Secrets like `OTP_API_TOKEN` should always be stored in GitHub Secrets
-and injected as environment variables — never hardcoded in the workflow.
+3. Add the key to `.env.example` with a comment
+4. Add the key to this guide in the relevant table
+5. Commit `.env.example` and this guide — never commit `.env`
