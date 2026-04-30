@@ -79,20 +79,27 @@ jobs:
             echo "Constructed URL: $DOWNLOAD_URL"
           fi
 
-          echo "apk_url=$DOWNLOAD_URL" >> $GITHUB_OUTPUT
+          CACHE_KEY="$VERSION-$BUILD"
+          echo "apk_url=$DOWNLOAD_URL"    >> $GITHUB_OUTPUT
+          echo "apk_version=$CACHE_KEY"   >> $GITHUB_OUTPUT  # ← add this
           echo "Final URL: $DOWNLOAD_URL"
+          echo "Cache key: $CACHE_KEY"
+
+      - name: Cache APK
+        id: cache-apk
+        uses: actions/cache@v4
+        with:
+          path: apks/sauce_demo/MyDemoAppAndroid.apk
+          key: apk-sauce-demo-${{ steps.apk.outputs.apk_version }}-${{ runner.os }}
 
       - name: Download APK
+        if: steps.cache-apk.outputs.cache-hit != 'true'
         run: |
           mkdir -p apks/sauce_demo
           curl -L "${{ steps.apk.outputs.apk_url }}" \
                -o apks/sauce_demo/MyDemoAppAndroid.apk
-
-          # Show what file command returns for debugging
           file apks/sauce_demo/MyDemoAppAndroid.apk
           ls -lh apks/sauce_demo/
-
-          # APKs are ZIP files — accept any ZIP-based format description
           file apks/sauce_demo/MyDemoAppAndroid.apk | grep -qiE "zip|jar|android" || \
             { echo "ERROR: Not a valid APK"; exit 1; }
           echo "✅ APK downloaded and valid"
@@ -110,8 +117,8 @@ jobs:
           APPIUM_LOG_LEVEL: "warn"
           EXPLICIT_TIMEOUT: "45"
           PAGE_LOAD_TIMEOUT: "60"
-          SAUCE_USERNAME:        ${{ secrets.SAUCE_USERNAME }}
-          SAUCE_PASSWORD:        ${{ secrets.SAUCE_PASSWORD }}
+          SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME }}
+          SAUCE_PASSWORD: ${{ secrets.SAUCE_PASSWORD }}
           SAUCE_LOCKED_USERNAME: ${{ secrets.SAUCE_LOCKED_USERNAME }}
         with:
           api-level: 34
