@@ -66,7 +66,7 @@ apps:
       version: "2.2.0"
       build: "25"
       filename: "mda-{version}-{build}.apk"
-      download_url: "https://github.com/saucelabs/my-demo-app-android/releases/download/2.2.0/mda-2.2.0-25.apk"
+      download_url: ""
 
 reporting:
   extent:
