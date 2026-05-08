@@ -329,7 +329,7 @@ public class AdbCommands {
      * @throws RuntimeException if the process cannot be started
      */
     public String exec(List<String> cmd) {
-        log.trace("ADB exec: {}", String.join(" ", cmd));
+        log.trace("ADB exec: {}", cmd.get(0));
         try {
             Process process = new ProcessBuilder(cmd).redirectErrorStream(true).start();
             String output = new BufferedReader(new InputStreamReader(process.getInputStream()))
@@ -337,12 +337,11 @@ public class AdbCommands {
                     .collect(Collectors.joining("\n"));
             int exitCode = process.waitFor();
             if (exitCode != 0) {
-                log.warn("ADB command exited with code {}: {}", exitCode, output);
+                log.warn("ADB command exited with code {}, enable TRACE for details", exitCode);
+                log.trace("ADB command output: {}", output);
             } else if (!output.contains("\n")) {
-                // Single line output — safe to log inline
-                log.trace("ADB output: {}", output);
+                log.trace("ADB output [redacted] enable TRACE logging to view");
             }
-            // Multi-line output (logcat) is logged by the caller with [LOGCAT] label
             return output;
         } catch (Exception e) {
             throw new AdbCommandException(String.join(" ", cmd), e);

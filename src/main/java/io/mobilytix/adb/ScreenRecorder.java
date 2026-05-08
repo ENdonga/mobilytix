@@ -8,6 +8,7 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Records the device screen during test execution using ADB screenrecord.
@@ -45,6 +46,7 @@ public class ScreenRecorder {
     private static final String SAFE_NAME_REPLACEMENT = "_";
     private static final int THREAD_JOIN_TIMEOUT_MS = 5000;
     private static final int FILE_WRITE_DELAY_MS = 1000;
+    private static final int MAX_RECORDING_AGE_DAYS = 7;
 
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern(TIMESTAMP_PATTERN);
     private static boolean disabledLogged = false;
@@ -121,6 +123,32 @@ public class ScreenRecorder {
         adb.shell(CMD_RM, currentDevicePath);
 
         log.info("Screen recording saved to: {}", currentLocalPath);
+    }
+
+    public void cleanUpOldRecordings() {
+        File outputDir = new File(config.getScreenRecordingOutputPath());
+        if (!outputDir.exists()) {
+            log.debug("Output recording directory does not exist, there's nothing to clean");
+            return;
+        }
+        File[] recordings = outputDir.listFiles((dir, name) -> name.endsWith(FILE_EXTENSION));
+        if (recordings == null || recordings.length == 0) {
+            log.debug("No screen recordings found to cleanup");
+            return;
+        }
+        long cutoffMs = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(MAX_RECORDING_AGE_DAYS);
+        int deleted = 0;
+        for (File rec : recordings) {
+            if (rec.lastModified() < cutoffMs) {
+                if (rec.delete()) {
+                    deleted++;
+                    log.debug("Deleted screen recording: {}", rec.getName());
+                } else {
+                    log.warn("Unable to delete screen recording: {}", rec.getName());
+                }
+            }
+        }
+        log.info("Recording cleanup complete - {} file(s) deleted", deleted);
     }
 
     /**

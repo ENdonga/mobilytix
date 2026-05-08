@@ -2,7 +2,7 @@ name: CI Smoke Test
 
 on:
   push:
-    branches: [ fix_resolve_flaky_tests ]
+    branches: [ chore/framework-cleanup ]
 jobs:
   smoke:
     name: Smoke — APK download verification
@@ -111,6 +111,19 @@ jobs:
           file apks/sauce_demo/MyDemoAppAndroid.apk | grep -qiE "zip|jar|android" || \
             { echo "ERROR: Not a valid APK"; exit 1; }
           echo "✅ APK downloaded and valid"
+
+      - name: Validate required secrets
+        run: |
+          MISSING=()
+          [[ -z "${{ secrets.SAUCE_USERNAME }}" ]] && MISSING+=("SAUCE_USERNAME")
+          [[ -z "${{ secrets.SAUCE_PASSWORD }}" ]] && MISSING+=("SAUCE_PASSWORD")
+          
+          if [ ${#MISSING[@]} -gt 0 ]; then
+            echo "Missing required secrets: ${MISSING[*]}"
+            echo "Add them in Github Secrets and Variables section"
+            exit 1
+          fi
+          echo "✅ All required secrets are present"
 
       # -----------------------------------------------------------------------
       # One smoke test — fastest possible verification the APK works

@@ -5,7 +5,7 @@ import io.appium.java_client.android.options.UiAutomator2Options;
 import io.mobilytix.adb.AdbCommands;
 import io.mobilytix.config.*;
 import io.mobilytix.exceptions.ApkNotFoundException;
-import io.mobilytix.exceptions.AppiumServerException;
+import io.mobilytix.exceptions.ConfigException;
 import io.mobilytix.exceptions.DriverInitException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -172,6 +172,8 @@ public class DriverManager {
 
     private void applySauceLabsOptions(UiAutomator2Options options, AppConfig appConfig) {
         SauceLabsConfig sauceLabsConfig = config.getSauceLabsConfig();
+        String username = config.getCredential(CredentialKeys.SAUCE_LABS_USERNAME, null);
+        String accessKey = config.getCredential(CredentialKeys.SAUCE_LABS_ACCESS_KEY, null);
         String buildName = sauceLabsConfig.getBuild() + "-" + System.getenv().getOrDefault("GITHUB_RUN_NUMBER", "local");
         options.setApp("storage:filename=" + sauceLabsConfig.getAppStorageFilename())
                 .setAppPackage(appConfig.getPackageName())
@@ -179,6 +181,8 @@ public class DriverManager {
         options.setCapability("platformVersion", sauceLabsConfig.getPlatformVersion());
         options.setCapability("deviceName", sauceLabsConfig.getDeviceName());
         options.setCapability("sauce:options", Map.of(
+                "username", username,
+                "accessKey", accessKey,
                 "build", buildName,
                 "name", appConfig.getAppName(),
                 "region", sauceLabsConfig.getRegion(),
@@ -242,14 +246,11 @@ public class DriverManager {
         String username = config.getCredential(CredentialKeys.SAUCE_LABS_USERNAME, null);
         String accessKey = config.getCredential(CredentialKeys.SAUCE_LABS_ACCESS_KEY, null);
         String region = config.getSauceLabsConfig().getRegion();
-        if (username == null || accessKey == null) {
-            throw new AppiumServerException(
-                    "Sauce Labs credentials not set. Set SAUCE_LABS_USERNAME and SAUCE_LABS_ACCESS_KEY in .env or CI secrets.");
-        }
         try {
             return new URL(String.format("https://%s:%s@ondemand.%s.saucelabs.com/wd/hub", username, accessKey, region));
+//            return new URL(String.format("https://ondemand.%s.saucelabs.com/wd/hub", region));
         } catch (MalformedURLException e) {
-            throw new AppiumServerException("Invalid Sauce Labs URL — check region: " + region, e);
+            throw new ConfigException("Invalid Sauce Labs URL — check region: " + region, e);
         }
     }
 }

@@ -113,19 +113,6 @@ public class AppiumServerManager {
     }
 
     /**
-     * Builds the Appium service with config values.
-     */
-    private AppiumDriverLocalService buildService() {
-        return new AppiumServiceBuilder()
-                .withIPAddress(config.getAppiumHost())
-                .usingPort(config.getAppiumPort())
-                .withArgument(GeneralServerFlag.LOG_LEVEL, config.getAppiumLogLevel())
-                .withArgument(GeneralServerFlag.RELAXED_SECURITY)
-                .withTimeout(Duration.ofSeconds(SERVER_START_TIMEOUT_SECONDS))
-                .build();
-    }
-
-    /**
      * Checks if an Appium server is already running on the configured port by hitting the /status endpoint.
      * <p>
      * Returns true if the server responds with HTTP 200.
@@ -168,6 +155,19 @@ public class AppiumServerManager {
             sleep(SERVER_READY_POLL_MS);
         }
         throw new AppiumServerException("Appium server did not become ready after " + SERVER_READY_MAX_ATTEMPTS + " attempts. Check if port " + config.getAppiumPort() + " is available.");
+    }
+
+    /**
+     * Builds the Appium service with config values.
+     */
+    private AppiumDriverLocalService buildService() {
+        return new AppiumServiceBuilder()
+                .withIPAddress(config.getAppiumHost())
+                .usingPort(config.getAppiumPort())
+                .withArgument(GeneralServerFlag.LOG_LEVEL, config.getAppiumLogLevel())
+                .withArgument(GeneralServerFlag.RELAXED_SECURITY)
+                .withTimeout(Duration.ofSeconds(SERVER_START_TIMEOUT_SECONDS))
+                .build();
     }
 
     private void sleep(int millis) {

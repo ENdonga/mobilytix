@@ -8,7 +8,7 @@ import lombok.Data;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SauceLabsConfig {
     @JsonProperty("region")
-    private String region = "us-west-1";
+    private String region = "eu-central-1";
 
     @JsonProperty("build")
     private String build = "mobilytix";

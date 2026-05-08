@@ -80,11 +80,6 @@ public class ConfigLoader {
     private static final String PROP_SCREENSHOT_ON_PASS = "screenshot.on_pass";
     private static final String ENV_SCREENSHOT_ON_PASS = "SCREENSHOT_ON_PASS";
 
-    // Authentication — credentials only come from env, never config.yaml
-    private static final String ENV_OTP_API_TOKEN = "OTP_API_TOKEN";
-    private static final String ENV_SSO_USERNAME = "SSO_USERNAME";
-    private static final String ENV_SSO_PASSWORD = "SSO_PASSWORD";
-
     // Timeouts
     private static final String PROP_EXPLICIT_TIMEOUT = "explicit.timeout";
     private static final String ENV_EXPLICIT_TIMEOUT = "EXPLICIT_TIMEOUT";
@@ -264,40 +259,6 @@ public class ConfigLoader {
         return reporting.getScreenRecording().getOutputPath();
     }
 
-    /**
-     * Returns the OTP API token for email-based OTP resolution.
-     * Set via OTP_API_TOKEN in .env or CI environment.
-     *
-     * @return token string or null if not configured
-     */
-    public String getOtpApiToken() {
-        String token = System.getProperty(ENV_OTP_API_TOKEN, System.getenv(ENV_OTP_API_TOKEN));
-        if (token == null || token.isBlank()) {
-            log.warn("OTP_API_TOKEN not set — email OTP resolution will fail. " + "Set it in .env or as a CI environment variable.");
-        }
-        return token;
-    }
-
-    /**
-     * Returns the SSO username.
-     * Set via SSO_USERNAME in .env or CI environment.
-     *
-     * @return username string or null if not configured
-     */
-    public String getSsoUsername() {
-        return System.getProperty(ENV_SSO_USERNAME, System.getenv(ENV_SSO_USERNAME));
-    }
-
-    /**
-     * Returns the SSO password.
-     * Set via SSO_PASSWORD in .env or CI environment.
-     *
-     * @return password string or null if not configured
-     */
-    public String getSsoPassword() {
-        return System.getProperty(ENV_SSO_PASSWORD, System.getenv(ENV_SSO_PASSWORD));
-    }
-
     @SuppressWarnings("unchecked")
     public List<String> getParallelDeviceUdids() {
         try {
@@ -367,51 +328,8 @@ public class ConfigLoader {
             return defaultValue;
         }
 
-        log.warn("Credential '{}' not configured. Set it in .env or CI environment.", envKey);
-        return null;
-    }
-
-    /**
-     * Resolves an override value from three sources in priority order:
-     * 1. System property  -Dprop.key=value  (command line)
-     * 2. System property  ENV_KEY=value      (.env file via EnvLoader)
-     * 3. OS env var       ENV_KEY=value      (shell or CI)
-     *
-     * @param propKey dot-notation system property key e.g. "device.udid"
-     * @param envKey  uppercase env var key            e.g. "DEVICE_UDID"
-     * @return the override value or null if not set in any source
-     */
-    private String resolveOverride(String propKey, String envKey) {
-        // 1. Command line: -Dprop.key=value
-        String fromProp = System.getProperty(propKey);
-        if (fromProp != null && !fromProp.isBlank()) return fromProp.trim();
-
-        // 2. .env file — EnvLoader stores as System.setProperty(ENV_KEY, value)
-        String fromEnvProp = System.getProperty(envKey);
-        if (fromEnvProp != null && !fromEnvProp.isBlank()) return fromEnvProp.trim();
-
-        // 3. OS environment variable
-        String fromEnv = System.getenv(envKey);
-        if (fromEnv != null && !fromEnv.isBlank()) return fromEnv.trim();
-
-        return null;
-    }
-
-    /**
-     * Returns a human-readable label for which source provided the override.
-     * Used in log messages only.
-     */
-    private String getOverrideSource(String propKey, String envKey) {
-        if (System.getProperty(propKey) != null) {
-            return "command line (-D" + propKey + ")";
-        }
-        if (System.getProperty(envKey) != null) {
-            return ".env file";
-        }
-        if (System.getenv(envKey) != null) {
-            return "OS environment variable";
-        }
-        return "config.yaml";
+        throw new IllegalStateException("Required credentials '" + envKey + "' is not set. " +
+                "Set it in your .env file or as a CI environment variable. See .env.example for full list of required keys");
     }
 
     private void resolveAllOverrides() {
@@ -519,5 +437,48 @@ public class ConfigLoader {
             log.info("Page load timeout overridden: {} → {}s", framework.getTimeouts().getPageLoad(), pageLoadTimeoutOverride);
             framework.getTimeouts().setPageLoad(Integer.parseInt(pageLoadTimeoutOverride));
         }
+    }
+
+    /**
+     * Resolves an override value from three sources in priority order:
+     * 1. System property  -Dprop.key=value  (command line)
+     * 2. System property  ENV_KEY=value      (.env file via EnvLoader)
+     * 3. OS env var       ENV_KEY=value      (shell or CI)
+     *
+     * @param propKey dot-notation system property key e.g. "device.udid"
+     * @param envKey  uppercase env var key            e.g. "DEVICE_UDID"
+     * @return the override value or null if not set in any source
+     */
+    private String resolveOverride(String propKey, String envKey) {
+        // 1. Command line: -Dprop.key=value
+        String fromProp = System.getProperty(propKey);
+        if (fromProp != null && !fromProp.isBlank()) return fromProp.trim();
+
+        // 2. .env file — EnvLoader stores as System.setProperty(ENV_KEY, value)
+        String fromEnvProp = System.getProperty(envKey);
+        if (fromEnvProp != null && !fromEnvProp.isBlank()) return fromEnvProp.trim();
+
+        // 3. OS environment variable
+        String fromEnv = System.getenv(envKey);
+        if (fromEnv != null && !fromEnv.isBlank()) return fromEnv.trim();
+
+        return null;
+    }
+
+    /**
+     * Returns a human-readable label for which source provided the override.
+     * Used in log messages only.
+     */
+    private String getOverrideSource(String propKey, String envKey) {
+        if (System.getProperty(propKey) != null) {
+            return "command line (-D" + propKey + ")";
+        }
+        if (System.getProperty(envKey) != null) {
+            return ".env file";
+        }
+        if (System.getenv(envKey) != null) {
+            return "OS environment variable";
+        }
+        return "config.yaml";
     }
 }

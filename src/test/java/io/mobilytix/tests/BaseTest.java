@@ -1,6 +1,7 @@
 package io.mobilytix.tests;
 
 import io.mobilytix.adb.AdbCommands;
+import io.mobilytix.adb.ScreenRecorder;
 import io.mobilytix.annotation.AppUnderTest;
 import io.mobilytix.config.AppConfig;
 import io.mobilytix.config.ConfigLoader;
@@ -81,6 +82,7 @@ public abstract class BaseTest {
         log.info("======================================");
         log.info("  Mobilytix Suite Completed");
         log.info("======================================");
+        ScreenRecorder.getInstance().cleanUpOldRecordings();
         AppiumServerManager.getInstance().stop();
     }
 
