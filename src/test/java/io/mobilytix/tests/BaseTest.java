@@ -19,26 +19,19 @@ import org.testng.annotations.*;
 
 /**
  * Base class for all test classes in the framework.
- * <p>
  * Every test class must:
  * 1. Extend BaseTest
  * 2. Be annotated with @AppUnderTest("app_key")
- * <p>
  * Example:
  *
  * @AppUnderTest("app_a") public class LoginTest extends BaseTest {
  * @Test public void testValidLogin() { ... }
  * }
- * <p>
  * Lifecycle managed here:
  * @BeforeSuite — start Appium server (if auto_start=true)
  * @BeforeClass(dependsOnMethods = "setUp") — resolve annotation, load config, init driver
  * @AfterClass — quit driver, clear session
  * @AfterSuite — flush reports, stop Appium server
- * <p>
- * Never put @BeforeSuite or @AfterSuite in a test class they belong here and run exactly once for the entire suite.
- * Never add alwaysRun = true to @BeforeClass in test classes.
- * It overrides dependsOnMethods and causes tests to run without a driver.
  */
 @Listeners(MobilytixListener.class)
 public abstract class BaseTest {
@@ -106,7 +99,7 @@ public abstract class BaseTest {
             throw new IllegalStateException(String.format(ERROR_MISSING_ANNOTATION, getClass().getSimpleName()));
         }
         String appKey = annotation.value().trim().toLowerCase();
-        log.info("Setting up | class: {} | app: {}", getClass().getSimpleName(), appKey);
+        log.info("Setting up | class:: {} | app:: {}", getClass().getSimpleName(), appKey);
 
         AppConfig appConfig = ConfigLoader.getInstance().getAppConfig(appKey);
         SessionContext.set(appKey, appConfig);
@@ -124,10 +117,10 @@ public abstract class BaseTest {
             log.debug("Suite aborted — skipping teardown for: {}", getClass().getSimpleName());
             return;
         }
-        log.info("Tearing down | class {}", getClass().getSimpleName());
+        log.info("Tearing down | class:: {}", getClass().getSimpleName());
         DriverManager.getInstance().quitDriver();
         SessionContext.clear();
-        log.info("Tearing down complete | class {}", getClass().getSimpleName());
+        log.info("Tearing down complete | class:: {}", getClass().getSimpleName());
     }
 
     /**

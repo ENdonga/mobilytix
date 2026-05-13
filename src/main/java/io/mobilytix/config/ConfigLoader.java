@@ -267,7 +267,7 @@ public class ConfigLoader {
                 return List.of();
             }
             return devices.stream()
-                    .map(device -> String.valueOf(device.get("udid")))
+                    .map(dev -> String.valueOf(dev.get("udid")))
                     .toList();
         } catch (Exception e) {
             return List.of();

@@ -22,7 +22,6 @@ public class LoginTest extends BaseTest {
     // Credentials resolved once for the class — from .env or CI environment
     private String validUsername;
     private String validPassword;
-    private String lockedUsername;
 
     @BeforeClass(dependsOnMethods = "setUp")
     public void setUpPage() {
@@ -31,7 +30,6 @@ public class LoginTest extends BaseTest {
         ConfigLoader config = ConfigLoader.getInstance();
         validUsername = config.getCredential(CredentialKeys.SAUCE_USERNAME, null).trim();
         validPassword = config.getCredential(CredentialKeys.SAUCE_PASSWORD, null).trim();
-        lockedUsername = config.getCredential(CredentialKeys.SAUCE_LOCKED_USERNAME, null).trim();
         log.info("Login tests will use username: {}", validUsername);
     }
 

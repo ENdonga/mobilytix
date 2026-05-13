@@ -5,10 +5,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 /**
  * Records the device screen during test execution using ADB screenrecord.
@@ -42,7 +46,7 @@ public class ScreenRecorder {
     private static final String DEVICE_RECORDING_DIR = "/sdcard/";
     private static final String FILE_EXTENSION = ".mp4";
     private static final String TIMESTAMP_PATTERN = "yyyyMMdd_HHmmss";
-    private static final String SAFE_NAME_REGEX = "[^a-zA-Z0-9_]";
+    private static final String SAFE_NAME_REGEX = "\\\\W";
     private static final String SAFE_NAME_REPLACEMENT = "_";
     private static final int THREAD_JOIN_TIMEOUT_MS = 5000;
     private static final int FILE_WRITE_DELAY_MS = 1000;
@@ -126,29 +130,33 @@ public class ScreenRecorder {
     }
 
     public void cleanUpOldRecordings() {
-        File outputDir = new File(config.getScreenRecordingOutputPath());
-        if (!outputDir.exists()) {
+        Path outputDirPath = Paths.get(config.getScreenRecordingOutputPath());
+        if (Files.notExists(outputDirPath)) {
             log.debug("Output recording directory does not exist, there's nothing to clean");
             return;
         }
-        File[] recordings = outputDir.listFiles((dir, name) -> name.endsWith(FILE_EXTENSION));
-        if (recordings == null || recordings.length == 0) {
-            log.debug("No screen recordings found to cleanup");
-            return;
-        }
         long cutoffMs = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(MAX_RECORDING_AGE_DAYS);
-        int deleted = 0;
-        for (File rec : recordings) {
-            if (rec.lastModified() < cutoffMs) {
-                if (rec.delete()) {
-                    deleted++;
-                    log.debug("Deleted screen recording: {}", rec.getName());
-                } else {
-                    log.warn("Unable to delete screen recording: {}", rec.getName());
+        try (Stream<Path> files = Files.list(outputDirPath)) {
+            long deletedCount = files.filter(path -> path.toString().endsWith(FILE_EXTENSION)).filter(path -> {
+                try {
+                    return Files.getLastModifiedTime(path).toMillis() < cutoffMs;
+                } catch (IOException e) {
+                    return false;
                 }
-            }
+            }).mapToLong(path -> {
+                try {
+                    Files.delete(path);
+                    log.debug("Deleted screen recording: {}", path.getFileName());
+                    return 1;
+                } catch (IOException e) {
+                    log.warn("Unable to delete screen recording {}: {}", path.getFileName(), e.getMessage());
+                    return 0;
+                }
+            }).sum();
+            log.info("Recording cleanup complete - {} file(s) deleted", deletedCount);
+        } catch (IOException e) {
+            log.error("Failed to list recordings for cleanup: {}", e.getMessage());
         }
-        log.info("Recording cleanup complete - {} file(s) deleted", deleted);
     }
 
     /**

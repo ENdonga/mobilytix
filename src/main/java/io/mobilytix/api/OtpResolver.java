@@ -71,8 +71,7 @@ public class OtpResolver {
         log.info("OTP resolved successfully for user: {} [code redacted]", username);
         //TODO: pass otpCode to your OTP entry page object here
         // Example: OtpPage.getInstance().enterOtp(otpCode);
-        log.debug("OTP entry not wired to a page object yet. " +
-                "Implement OtpPage and call it here.");
+        log.debug("OTP entry not wired to a page object yet. Implement OtpPage and call it here.");
     }
 
     /**

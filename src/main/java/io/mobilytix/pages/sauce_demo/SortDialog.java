@@ -2,7 +2,6 @@ package io.mobilytix.pages.sauce_demo;
 
 import io.mobilytix.utils.BasePage;
 import io.mobilytix.utils.LocatorFactory;
-import io.mobilytix.utils.WaitUtils;
 import org.openqa.selenium.By;
 
 public class SortDialog extends BasePage {

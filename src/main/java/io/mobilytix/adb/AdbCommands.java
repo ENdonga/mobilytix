@@ -343,6 +343,10 @@ public class AdbCommands {
                 log.trace("ADB output [redacted] enable TRACE logging to view");
             }
             return output;
+        } catch (InterruptedException e) {
+            // Restore the interrupted status so callers up the stack know
+            Thread.currentThread().interrupt();
+            throw new AdbCommandException("ADB command was interrupted: " + String.join(" ", cmd), e);
         } catch (Exception e) {
             throw new AdbCommandException(String.join(" ", cmd), e);
         }

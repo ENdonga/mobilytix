@@ -37,10 +37,10 @@ public class MobilytixListener implements ITestListener {
     private static final String SCREENSHOT_LABEL = "Screenshot on failure";
     private static final String LOGCAT_LABEL = "Logcat on failure";
     private static final int LOGCAT_FAILURE_LINES = 200;
-    private static final String LOG_PREFIX_START = "▶ TEST START  : {}";
-    private static final String LOG_PREFIX_PASS = "✅ TEST PASS   : {}";
-    private static final String LOG_PREFIX_FAIL = "❌ TEST FAIL   : {} — {}";
-    private static final String LOG_PREFIX_SKIP = "⏭  TEST SKIP   : {}";
+    private static final String LOG_PREFIX_START = "▶ TEST START : {}";
+    private static final String LOG_PREFIX_PASS = "✅ TEST PASS : {}";
+    private static final String LOG_PREFIX_FAIL = "❌ TEST FAIL : {} -> {}";
+    private static final String LOG_PREFIX_SKIP = "⏭  TEST SKIP : {}";
     private static boolean abortLoggedOnce = false;
 
     @Override
@@ -163,7 +163,7 @@ public class MobilytixListener implements ITestListener {
      */
     private void attachScreenShotToExtent(String label) {
         try {
-            if (ExtentManager.getTest() != null) {
+            if (ExtentManager.getTest() == null) {
                 return;
             }
             byte[] screenshot = AllureAttachments.captureScreenshot();

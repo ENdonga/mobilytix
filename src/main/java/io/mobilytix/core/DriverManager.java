@@ -19,7 +19,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 /**
  * Manages the AndroidDriver instance per thread.
@@ -218,7 +217,7 @@ public class DriverManager {
 
         // Filter to only connected devices
         List<String> connectedDevices = AdbCommands.listConnectedDevices();
-        List<String> availableDevices = parallelDevices.stream().filter(connectedDevices::contains).collect(Collectors.toList());
+        List<String> availableDevices = parallelDevices.stream().filter(connectedDevices::contains).toList();
         if (availableDevices.isEmpty()) {
             log.warn("No Parallel devices connected - falling back to the default device: {}", deviceConfig.getUdid());
             return deviceConfig.getUdid();
@@ -248,7 +247,6 @@ public class DriverManager {
         String region = config.getSauceLabsConfig().getRegion();
         try {
             return new URL(String.format("https://%s:%s@ondemand.%s.saucelabs.com/wd/hub", username, accessKey, region));
-//            return new URL(String.format("https://ondemand.%s.saucelabs.com/wd/hub", region));
         } catch (MalformedURLException e) {
             throw new ConfigException("Invalid Sauce Labs URL — check region: " + region, e);
         }

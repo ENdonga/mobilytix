@@ -99,7 +99,6 @@ public class AuthHandler {
     private void handleBasic(String username, String credential) {
         log.debug("Handling basic auth for: {}", username);
         // TODO: call your app's LoginPage here
-        // Example: LoginPage.getInstance().login(username, credential);
         throw new UnsupportedOperationException("Basic auth handler not implemented. Implement handleBasic() in AuthHandler by calling your LoginPage.");
     }
 
